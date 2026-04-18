@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // NOVO: Importação do Firebase
-import 'firebase_options.dart'; // NOVO: Importação das configurações que você gerou
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'models/user_progress.dart';
 import 'package:provider/provider.dart';
 
-void main() async { // ALTERADO: Adicionado 'async'
-  // 1. Garante que os plugins do Flutter estejam prontos
-  WidgetsFlutterBinding.ensureInitialized();
+import 'models/user_progress.dart';
+import 'screens/welcome_screen.dart';
 
-  // 2. Inicializa o Firebase antes de rodar o App
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+void main() {
   runApp(
     ChangeNotifierProvider(
       create: (context) => UserProgress(),
@@ -28,20 +18,29 @@ class FonoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme =
+        ColorScheme.fromSeed(
+          seedColor: const Color(0xFFBC4ED8),
+          brightness: Brightness.light,
+        ).copyWith(
+          primary: const Color(0xFFBC4ED8),
+          secondary: const Color(0xFF7F00B2),
+          surface: const Color(0xFFFFF0FF),
+        );
+
     return MaterialApp(
       title: 'Liri',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7B2FBE),
-          primary: const Color(0xFF7B2FBE),
-          secondary: const Color(0xFFCE93D8),
-          surface: const Color(0xFFF8F0FF),
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: const Color(0xFFFFF0FF),
+        textTheme: ThemeData.light().textTheme.apply(
+          bodyColor: const Color(0xFF7F00B2),
+          displayColor: const Color(0xFF7F00B2),
         ),
-        fontFamily: 'Nunito',
       ),
-      home: const LoginScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }

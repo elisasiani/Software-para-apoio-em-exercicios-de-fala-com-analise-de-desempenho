@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/exercicio.dart';
 import '../models/user_progress.dart';
 import '../widgets/mascote_widget.dart';
-import 'trilha_screen.dart'; // <--- Verifique se este ficheiro não contém outra HomeScreen
+import 'trilha_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final String nomeUsuario;
@@ -16,7 +17,31 @@ class HomeScreen extends StatelessWidget {
       builder: (context, progresso, child) {
         return Scaffold(
           backgroundColor: const Color(0xFFF8F0FF),
-          appBar: _buildAppBar(progresso),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF7B2FBE),
+            elevation: 0,
+            title: const Text(
+              'Liri 🦒',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+              ),
+            ),
+            actions: [
+              _BadgeResumo(
+                icon: Icons.local_fire_department,
+                value: '${progresso.streakDays}',
+                color: Colors.orange,
+              ),
+              _BadgeResumo(
+                icon: Icons.star_rounded,
+                value: '${progresso.totalStars}',
+                color: Colors.yellow,
+              ),
+              const SizedBox(width: 12),
+            ],
+          ),
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -26,25 +51,24 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     'Olá, $nomeUsuario! 👋',
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A148C),
                     ),
                   ),
                   const SizedBox(height: 4),
                   const Text(
                     'O que vamos treinar hoje?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF9C27B0),
-                    ),
+                    style: TextStyle(fontSize: 16, color: Color(0xFF9C27B0)),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
                   const MascoteWidget(
-                    mensagem: 'Pronta para treinar juntos! Escolha uma trilha! 🌟',
+                    mensagem:
+                        'Pronta para treinar juntos! Escolha uma trilha! 🌟',
                     animacao: 'falando',
                   ),
-                  const SizedBox(height: 32),
-                  _buildCardProgresso(progresso),
+                  const SizedBox(height: 28),
+                  _CardProgresso(progresso: progresso),
                   const SizedBox(height: 24),
                   const Text(
                     'Suas Trilhas',
@@ -55,13 +79,15 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // A listagem dinâmica corrigida
                   ...DadosApp.trilhas.map(
                     (trilha) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: _buildCartaoTrilha(context, trilha, progresso),
+                      child: _TrilhaCard(
+                        trilha: trilha,
+                        progresso: progresso.getProgressoTrilha(trilha.id),
+                      ),
                     ),
-                  ).toList(),
+                  ),
                 ],
               ),
             ),
@@ -70,37 +96,30 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+}
 
-  PreferredSizeWidget _buildAppBar(UserProgress progresso) {
-    return AppBar(
-      backgroundColor: const Color(0xFF7B2FBE),
-      elevation: 0,
-      title: const Text(
-        'Liri 🦒',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
-        ),
-      ),
-      actions: [
-        _buildBadge(Icons.local_fire_department, '${progresso.streakDays}', Colors.orange),
-        _buildBadge(Icons.star_rounded, '${progresso.totalStars}', Colors.yellow),
-        const SizedBox(width: 8),
-      ],
-    );
-  }
+class _BadgeResumo extends StatelessWidget {
+  const _BadgeResumo({
+    required this.icon,
+    required this.value,
+    required this.color,
+  });
 
-  Widget _buildBadge(IconData icon, String valor, Color cor) {
+  final IconData icon;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: cor, size: 26),
-          const SizedBox(width: 3),
+          Icon(icon, color: color, size: 26),
+          const SizedBox(width: 4),
           Text(
-            valor,
+            value,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -111,13 +130,23 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildCardProgresso(UserProgress progresso) {
+class _CardProgresso extends StatelessWidget {
+  const _CardProgresso({required this.progresso});
+
+  final UserProgress progresso;
+
+  @override
+  Widget build(BuildContext context) {
     final totalFeitos = DadosApp.trilhas
-        .map((t) => progresso.getProgressoTrilha(t.id))
-        .fold(0, (soma, v) => soma + v);
-    final totalPossivel = DadosApp.trilhas.length * 5;
-    final percentual = totalPossivel > 0 ? totalFeitos / totalPossivel : 0.0;
+        .map((trilha) => progresso.getProgressoTrilha(trilha.id))
+        .fold<int>(0, (soma, valor) => soma + valor);
+    final totalPossivel = DadosApp.trilhas.fold<int>(
+      0,
+      (soma, trilha) => soma + trilha.exercicios.length,
+    );
+    final percentual = totalPossivel == 0 ? 0.0 : totalFeitos / totalPossivel;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -128,13 +157,24 @@ class HomeScreen extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF7B2FBE).withOpacity(0.28),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Seu Progresso Total',
-            style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600),
+            'Seu progresso total',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -142,11 +182,19 @@ class HomeScreen extends StatelessWidget {
             children: [
               Text(
                 '$totalFeitos de $totalPossivel exercícios',
-                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
-                '${(percentual * 100).toInt()}%',
-                style: const TextStyle(color: Colors.yellow, fontSize: 22, fontWeight: FontWeight.bold),
+                '${(percentual * 100).round()}%',
+                style: const TextStyle(
+                  color: Colors.yellow,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -164,19 +212,24 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildCartaoTrilha(BuildContext context, Trilha trilha, UserProgress progresso) {
-    final progressoTrilha = progresso.getProgressoTrilha(trilha.id);
-    final concluida = progressoTrilha >= 5;
+class _TrilhaCard extends StatelessWidget {
+  const _TrilhaCard({required this.trilha, required this.progresso});
+
+  final Trilha trilha;
+  final int progresso;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalExercicios = trilha.exercicios.length;
+    final concluida = progresso >= totalExercicios;
 
     return GestureDetector(
       onTap: () {
-        // Se ao clicar aqui ele abre a Home novamente, o problema está na classe 'TrilhaScreen'
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => TrilhaScreen(trilha: trilha),
-          ),
+          MaterialPageRoute(builder: (_) => TrilhaScreen(trilha: trilha)),
         );
       },
       child: Container(
@@ -188,6 +241,13 @@ class HomeScreen extends StatelessWidget {
             color: concluida ? Colors.green : const Color(0xFFCE93D8),
             width: 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -209,7 +269,11 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     trilha.titulo,
-                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF4A148C)),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF4A148C),
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -217,17 +281,48 @@ class HomeScreen extends StatelessWidget {
                     style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
                   const SizedBox(height: 10),
-                  LinearProgressIndicator(
-                    value: progressoTrilha / 5,
-                    backgroundColor: const Color(0xFFE1BEE7),
-                    valueColor: AlwaysStoppedAnimation<Color>(concluida ? Colors.green : const Color(0xFF7B2FBE)),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(
+                            value: totalExercicios == 0
+                                ? 0
+                                : progresso / totalExercicios,
+                            minHeight: 8,
+                            backgroundColor: const Color(0xFFE1BEE7),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              concluida
+                                  ? Colors.green
+                                  : const Color(0xFF7B2FBE),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        '$progresso/$totalExercicios',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: concluida
+                              ? Colors.green
+                              : const Color(0xFF7B2FBE),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Icon(
-              concluida ? Icons.check_circle_rounded : Icons.chevron_right_rounded,
+              concluida
+                  ? Icons.check_circle_rounded
+                  : Icons.chevron_right_rounded,
               color: concluida ? Colors.green : const Color(0xFF9C27B0),
+              size: 28,
             ),
           ],
         ),

@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/exercicio.dart';
 import '../models/user_progress.dart';
-import 'login_screen.dart';
 import 'home_screen.dart';
-import 'home_fono_screen.dart';
+import 'login_screen.dart';
 
 // ==============================================================
 // PERFIL SCREEN — tela central após o login
