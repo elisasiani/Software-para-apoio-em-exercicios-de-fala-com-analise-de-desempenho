@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'screens/login_screen.dart'; // Agora começa pelo login!
-=======
+import 'package:firebase_core/firebase_core.dart'; // NOVO: Importação do Firebase
+import 'firebase_options.dart'; // NOVO: Importação das configurações que você gerou
+import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
->>>>>>> 6ea929c48064e2c86cfcd258ad93838a7d5596fd
 import 'models/user_progress.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async { // ALTERADO: Adicionado 'async'
+  // 1. Garante que os plugins do Flutter estejam prontos
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. Inicializa o Firebase antes de rodar o App
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
-    // ChangeNotifierProvider: É o "gerenciador de estado" do app.
-    // Pense nele como uma caixa compartilhada onde qualquer tela pode
-    // ler ou modificar o progresso do usuário sem precisar ficar
-    // passando dados de tela em tela manualmente.
-    // Pacote necessário: adicionar 'provider: ^6.1.2' no pubspec.yaml
     ChangeNotifierProvider(
       create: (context) => UserProgress(),
       child: const FonoApp(),
@@ -27,36 +29,19 @@ class FonoApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-<<<<<<< HEAD
       title: 'Liri',
-=======
-      title: 'FonoAmigo',
->>>>>>> 6ea929c48064e2c86cfcd258ad93838a7d5596fd
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // useMaterial3: usa os componentes mais modernos do Flutter
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7B2FBE), // Roxo principal
+          seedColor: const Color(0xFF7B2FBE),
           primary: const Color(0xFF7B2FBE),
-          secondary: const Color(0xFFCE93D8), // Lilás
-          surface: const Color(0xFFF8F0FF), // Fundo lilás claríssimo
+          secondary: const Color(0xFFCE93D8),
+          surface: const Color(0xFFF8F0FF),
         ),
-        fontFamily: 'Nunito', // Fonte arredondada e amigável para crianças
-        // Para usar Nunito, adicione no pubspec.yaml:
-        // flutter:
-        //   fonts:
-        //     - family: Nunito
-        //       fonts:
-        //         - asset: assets/fonts/Nunito-Regular.ttf
-        //         - asset: assets/fonts/Nunito-Bold.ttf
-        //           weight: 700
+        fontFamily: 'Nunito',
       ),
-<<<<<<< HEAD
-      home: const LoginScreen(), // Ponto de entrada: tela de login
-=======
-      home: const HomeScreen(),
->>>>>>> 6ea929c48064e2c86cfcd258ad93838a7d5596fd
+      home: const LoginScreen(),
     );
   }
 }

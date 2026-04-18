@@ -3,21 +3,15 @@ import 'package:provider/provider.dart';
 import '../models/exercicio.dart';
 import '../models/user_progress.dart';
 import '../widgets/mascote_widget.dart';
-import 'trilha_screen.dart';
+import 'trilha_screen.dart'; // <--- Verifique se este ficheiro não contém outra HomeScreen
 
 class HomeScreen extends StatelessWidget {
-<<<<<<< HEAD
-  // Recebe o nome do usuário vindo da tela de login
   final String nomeUsuario;
 
   const HomeScreen({super.key, this.nomeUsuario = 'Amiguinho'});
-=======
-  const HomeScreen({super.key});
->>>>>>> 6ea929c48064e2c86cfcd258ad93838a7d5596fd
 
   @override
   Widget build(BuildContext context) {
-    // Consumer: "escuta" o UserProgress e redesenha só este widget quando mudar
     return Consumer<UserProgress>(
       builder: (context, progresso, child) {
         return Scaffold(
@@ -29,19 +23,11 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-<<<<<<< HEAD
-                  // Saudação com o nome que veio do login
                   Text(
                     'Olá, $nomeUsuario! 👋',
-=======
-                  // Saudação personalizada
-                  const Text(
-                    'Olá, Amiguinho! 👋',
->>>>>>> 6ea929c48064e2c86cfcd258ad93838a7d5596fd
-                    style: TextStyle(
-                      fontSize: 28,
+                    style: const TextStyle(
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A148C),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -52,19 +38,14 @@ class HomeScreen extends StatelessWidget {
                       color: Color(0xFF9C27B0),
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // Mascote com mensagem de boas-vindas
+                  const SizedBox(height: 20),
                   const MascoteWidget(
                     mensagem: 'Pronta para treinar juntos! Escolha uma trilha! 🌟',
                     animacao: 'falando',
                   ),
                   const SizedBox(height: 32),
-
-                  // Card de progresso geral
                   _buildCardProgresso(progresso),
                   const SizedBox(height: 24),
-
                   const Text(
                     'Suas Trilhas',
                     style: TextStyle(
@@ -74,14 +55,13 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Lista de trilhas gerada dinamicamente a partir dos dados
+                  // A listagem dinâmica corrigida
                   ...DadosApp.trilhas.map(
                     (trilha) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: _buildCartaoTrilha(context, trilha, progresso),
                     ),
-                  ),
+                  ).toList(),
                 ],
               ),
             ),
@@ -91,17 +71,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // AppBar com os badges de gamificação
   PreferredSizeWidget _buildAppBar(UserProgress progresso) {
     return AppBar(
       backgroundColor: const Color(0xFF7B2FBE),
       elevation: 0,
       title: const Text(
-<<<<<<< HEAD
         'Liri 🦒',
-=======
-        'FonoAmigo 🦒',
->>>>>>> 6ea929c48064e2c86cfcd258ad93838a7d5596fd
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
@@ -116,7 +91,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Badge reutilizável para streak e estrelas
   Widget _buildBadge(IconData icon, String valor, Color cor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -138,14 +112,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Card que mostra o progresso geral do usuário
   Widget _buildCardProgresso(UserProgress progresso) {
-    // Calcula progresso total: soma de todas as trilhas / total de exercícios
     final totalFeitos = DadosApp.trilhas
         .map((t) => progresso.getProgressoTrilha(t.id))
         .fold(0, (soma, v) => soma + v);
     final totalPossivel = DadosApp.trilhas.length * 5;
-    final percentual = totalFeitos / totalPossivel;
+    final percentual = totalPossivel > 0 ? totalFeitos / totalPossivel : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -156,24 +128,13 @@ class HomeScreen extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7B2FBE).withOpacity(0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Seu Progresso Total',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Row(
@@ -181,24 +142,15 @@ class HomeScreen extends StatelessWidget {
             children: [
               Text(
                 '$totalFeitos de $totalPossivel exercícios',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
                 '${(percentual * 100).toInt()}%',
-                style: const TextStyle(
-                  color: Colors.yellow,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: Colors.yellow, fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          // Barra de progresso (XP bar)
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
@@ -213,19 +165,17 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // Card de cada trilha na tela inicial
-  Widget _buildCartaoTrilha(
-      BuildContext context, Trilha trilha, UserProgress progresso) {
+  Widget _buildCartaoTrilha(BuildContext context, Trilha trilha, UserProgress progresso) {
     final progressoTrilha = progresso.getProgressoTrilha(trilha.id);
     final concluida = progressoTrilha >= 5;
 
     return GestureDetector(
       onTap: () {
-        // Navigator.push: empilha uma nova tela, mantendo a tela atual
+        // Se ao clicar aqui ele abre a Home novamente, o problema está na classe 'TrilhaScreen'
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => TrilhaScreen(trilha: trilha),
+            builder: (context) => TrilhaScreen(trilha: trilha),
           ),
         );
       },
@@ -238,17 +188,9 @@ class HomeScreen extends StatelessWidget {
             color: concluida ? Colors.green : const Color(0xFFCE93D8),
             width: 2,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Row(
           children: [
-            // Ícone/emoji da trilha
             Container(
               width: 60,
               height: 60,
@@ -267,11 +209,7 @@ class HomeScreen extends StatelessWidget {
                 children: [
                   Text(
                     trilha.titulo,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A148C),
-                    ),
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF4A148C)),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -279,41 +217,17 @@ class HomeScreen extends StatelessWidget {
                     style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
                   const SizedBox(height: 10),
-                  // Mini barra de progresso da trilha
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: progressoTrilha / 5,
-                            minHeight: 8,
-                            backgroundColor: const Color(0xFFE1BEE7),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              concluida ? Colors.green : const Color(0xFF7B2FBE),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        '$progressoTrilha/5',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: concluida ? Colors.green : const Color(0xFF7B2FBE),
-                        ),
-                      ),
-                    ],
+                  LinearProgressIndicator(
+                    value: progressoTrilha / 5,
+                    backgroundColor: const Color(0xFFE1BEE7),
+                    valueColor: AlwaysStoppedAnimation<Color>(concluida ? Colors.green : const Color(0xFF7B2FBE)),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
             Icon(
               concluida ? Icons.check_circle_rounded : Icons.chevron_right_rounded,
               color: concluida ? Colors.green : const Color(0xFF9C27B0),
-              size: 28,
             ),
           ],
         ),

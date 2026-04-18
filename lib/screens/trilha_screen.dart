@@ -13,42 +13,57 @@ class TrilhaScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Consumer: lê o UserProgress do Provider e reconstrói quando ele mudar
     return Consumer<UserProgress>(
       builder: (context, progresso, child) {
-        final progressoAtual = progresso.getProgressoTrilha(trilha.id);
+        // Buscamos o progresso específico desta trilha
+        final int progressoAtual = progresso.getProgressoTrilha(trilha.id);
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8F0FF),
           appBar: AppBar(
             backgroundColor: const Color(0xFF7B2FBE),
+            elevation: 0, // AppBar mais moderna e flat
             title: Text(
               trilha.titulo,
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
+            iconTheme: const IconThemeData(color: Colors.white),
           ),
           body: Column(
             children: [
-              // Mascote no topo com mensagem contextual
+              // Área do Mascote
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: MascoteWidget(
-                  mensagem: progressoAtual == 0
-                      ? 'Vamos começar! Você consegue! 💪'
-                      : progressoAtual == 5
-                          ? 'Incrível! Você completou tudo! 🎉'
-                          : 'Ótimo! Continue assim! ⭐',
-                  animacao: progressoAtual == 5 ? 'comemorando' : 'falando',
+                  mensagem: _getMensagemMascote(progressoAtual),
+                  animacao: progressoAtual >= 5 ? 'comemorando' : 'falando',
                 ),
               ),
 
-              // Mapa da trilha com os nós
+              // Lista de Exercícios (Mapa)
               Expanded(
-                child: _buildMapaTrilha(context, progresso, progressoAtual),
+                child: ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 40, top: 10),
+                  itemCount: trilha.exercicios.length,
+                  itemBuilder: (context, index) {
+                    // Inverte a ordem para o progresso subir (estilo Duolingo)
+                    final int indexReal = trilha.exercicios.length - 1 - index;
+                    final exercicio = trilha.exercicios[indexReal];
+                    final int numeroNo = indexReal + 1;
+
+                    // Lógica de estado do botão
+                    EstadoNo estado;
+                    if (indexReal < progressoAtual) {
+                      estado = EstadoNo.completo;
+                    } else if (indexReal == progressoAtual) {
+                      estado = EstadoNo.disponivel;
+                    } else {
+                      estado = EstadoNo.bloqueado;
+                    }
+
+                    return _buildNodeItem(context, exercicio, numeroNo, estado);
+                  },
+                ),
               ),
             ],
           ),
@@ -57,80 +72,47 @@ class TrilhaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMapaTrilha(
-      BuildContext context, UserProgress progresso, int progressoAtual) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      // Os nós ficam na ordem inversa (o 1 embaixo, como no Duolingo)
-      itemCount: trilha.exercicios.length,
-      itemBuilder: (context, index) {
-        // Invertemos o index para mostrar do mais recente pro mais antigo
-        final indexReal = trilha.exercicios.length - 1 - index;
-        final exercicio = trilha.exercicios[indexReal];
-        final numeroNo = indexReal + 1;
-
-        // Define o estado do nó baseado no progresso
-        EstadoNo estado;
-        if (indexReal < progressoAtual) {
-          estado = EstadoNo.completo;
-        } else if (indexReal == progressoAtual) {
-          estado = EstadoNo.disponivel;
-        } else {
-          estado = EstadoNo.bloqueado;
-        }
-
-        // Alterna os nós para esquerda/direita (efeito zigue-zague do Duolingo)
-        final alinhamento = indexReal % 2 == 0
-            ? MainAxisAlignment.center
-            : MainAxisAlignment.center;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-          child: Row(
-            mainAxisAlignment: alinhamento,
-            children: [
-              Column(
-                children: [
-                  TrilhaNodeWidget(
-                    numero: numeroNo,
-                    estado: estado,
-                    onTap: () {
-                      // Navega para a tela do exercício
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ExercicioScreen(
-                            exercicio: exercicio,
-                            trilhaId: trilha.id,
-                            numeroExercicio: numeroNo,
-                            totalExercicios: trilha.exercicios.length,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 6),
-                  // Rótulo abaixo do nó
-                  Text(
-                    estado == EstadoNo.completo
-                        ? '✅ Feito!'
-                        : estado == EstadoNo.disponivel
-                            ? 'Exercício $numeroNo'
-                            : '🔒',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: estado == EstadoNo.bloqueado
-                          ? Colors.grey
-                          : const Color(0xFF4A148C),
+  // Função auxiliar para organizar o código do Nó
+  Widget _buildNodeItem(BuildContext context, dynamic exercicio, int numero, EstadoNo estado) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        children: [
+          TrilhaNodeWidget(
+            numero: numero,
+            estado: estado,
+            onTap: estado == EstadoNo.bloqueado 
+              ? null // Desativa o clique se estiver bloqueado
+              : () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ExercicioScreen(
+                        exercicio: exercicio,
+                        trilhaId: trilha.id,
+                        numeroExercicio: numero,
+                        totalExercicios: trilha.exercicios.length,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                  );
+                },
           ),
-        );
-      },
+          const SizedBox(height: 8),
+          Text(
+            estado == EstadoNo.completo ? '✅ Concluído' : (estado == EstadoNo.disponivel ? 'Começar' : 'Bloqueado'),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: estado == EstadoNo.bloqueado ? Colors.grey : const Color(0xFF4A148C),
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  String _getMensagemMascote(int progresso) {
+    if (progresso == 0) return 'Vamos começar essa jornada? 💪';
+    if (progresso >= 5) return 'Uau! Trilha completada com sucesso! 🎉';
+    return 'Você está indo muito bem! Continue! ⭐';
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "441545837283",
+    "project_id": "app-fonoaudiologia-gamificado",
+    "storage_bucket": "app-fonoaudiologia-gamificado.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:441545837283:android:c38c8d7df6d95e5380d3d6",
+        "android_client_info": {
+          "package_name": "com.example.tcc_software_para_apoio_em_exercicios_de_fala_com_analise_de_desempenho"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3XZsKKtQVEbY7Lp-wj5MSD4VR2H3cwLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
