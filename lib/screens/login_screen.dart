@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // NOVA LINHA: Import do motor do Firebase
 import 'perfil_screen.dart'; // Nova tela de seleção de perfil
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ==============================================================
 // LOGIN SCREEN — Liri
@@ -25,6 +27,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _mostrarSenha = false;
   bool _mostrarSenhaFono = false;
+  
+  // NOVA LINHA: Variável para controlar se está carregando a comunicação com o BD
+  bool _isLoading = false; 
 
   @override
   void dispose() {
@@ -35,26 +40,164 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _loginCrianca() {
-    if (_nomeController.text.trim().isEmpty) {
-      _mostrarErro('Por favor, escreva seu nome! 😊');
-      return;
-    }
-    // Vai para a tela de perfis passando nome e tipo
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PerfilScreen(
-          nomeUsuario: _nomeController.text.trim(),
-          tipoPerfil: 'crianca',
-        ),
-      ),
-    );
+  // ==========================================
+  // LÓGICA DA CRIANÇA (Nome + Senha)
+  // ==========================================
+  
+  // NOVA FUNÇÃO: Gera um e-mail falso baseado no nome para enganar o Firebase
+  String _gerarEmailCrianca(String nome) {
+    String nomeLimpo = nome.trim().replaceAll(' ', '').toLowerCase();
+    return "$nomeLimpo@liri.app"; 
   }
 
-  void _loginFono() {
-    if (_emailController.text.trim().isEmpty ||
-        _senhaFonoController.text.isEmpty) {
+  // NOVA FUNÇÃO: Cadastra a criança no banco de dados
+  Future<void> _registrarCrianca() async {
+    if (_nomeController.text.trim().isEmpty || _senhaController.text.isEmpty) {
+      _mostrarErro('Escreva seu nome e uma senha mágica! ✨');
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      String emailInvisivel = _gerarEmailCrianca(_nomeController.text);
+      
+      // 1. Cria o usuário no Firebase Authentication
+      UserCredential credencial = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailInvisivel,
+        password: _senhaController.text.trim(),
+      );
+
+      // 2. NOVO: Salva os dados da criança no Firestore Database
+      await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(credencial.user!.uid)
+          .set({
+        'nome': _nomeController.text.trim(),
+        'email_acesso': emailInvisivel, // O email gerado automaticamente
+        'tipo': 'paciente', // Identificador para o perfil de criança
+        'progresso': 0, // Inicia a jornada do zero
+        'uid': credencial.user!.uid,
+        'criado_em': FieldValue.serverTimestamp(),
+      });
+      
+      _mostrarSucesso('Oba! Conta criada com sucesso! 🎉');
+      
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PerfilScreen(
+            nomeUsuario: _nomeController.text.trim(),
+            tipoPerfil: 'crianca',
+          ),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      _mostrarErro('Ops! Erro ao criar conta: ${e.message}');
+    } catch (e) {
+      _mostrarErro('Erro ao salvar ficha mágica: $e');
+    }
+    
+    setState(() => _isLoading = false);
+  }
+
+  // FUNÇÃO MODIFICADA: Agora é async e faz login real no Firebase
+  Future<void> _loginCrianca() async {
+    if (_nomeController.text.trim().isEmpty || _senhaController.text.isEmpty) {
+      _mostrarErro('Por favor, escreva seu nome e senha! 😊');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      String emailInvisivel = _gerarEmailCrianca(_nomeController.text);
+
+      // Loga no Firebase
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailInvisivel,
+        password: _senhaController.text.trim(),
+      );
+
+      if (!mounted) return;
+      // Vai para a tela de perfis passando nome e tipo
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PerfilScreen(
+            nomeUsuario: _nomeController.text.trim(),
+            tipoPerfil: 'crianca',
+          ),
+        ),
+      );
+    } on FirebaseAuthException {
+      _mostrarErro('Nome ou senha incorretos! Tente de novo. 🛑');
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  // ==========================================
+  // LÓGICA DO FONOAUDIÓLOGO (E-mail + Senha)
+  // ==========================================
+
+  // NOVA FUNÇÃO: Cadastra o fonoaudiólogo no banco de dados
+  Future<void> _registrarFono() async {
+    if (_emailController.text.trim().isEmpty || _senhaFonoController.text.isEmpty) {
+      _mostrarErro('Preencha e-mail e senha para criar a conta! 📋');
+      return;
+    }
+    if (!_emailController.text.contains('@')) {
+      _mostrarErro('E-mail inválido!');
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      // 1. Cria a conta no Authentication e guarda o resultado na variável "credencial"
+      UserCredential credencial = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _senhaFonoController.text.trim(),
+      );
+
+      // 2. NOVO: Salva a ficha do profissional no Firestore Database
+      await FirebaseFirestore.instance
+          .collection('usuarios')
+          .doc(credencial.user!.uid)
+          .set({
+        'email': _emailController.text.trim(),
+        'tipo': 'fono', // Para sabermos que não é uma criança
+        'uid': credencial.user!.uid,
+        'criado_em': FieldValue.serverTimestamp(), // Usa a hora oficial do servidor do Google
+      });
+      
+      _mostrarSucesso('Conta profissional criada com sucesso! ✅');
+      
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PerfilScreen(
+            nomeUsuario: _emailController.text.trim(),
+            tipoPerfil: 'fono',
+          ),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      _mostrarErro('Erro ao criar conta: ${e.message}');
+    } catch (e) {
+      // Adicionei isso caso o Firestore dê algum erro de permissão
+      _mostrarErro('Erro ao salvar dados: $e'); 
+    }
+    
+    setState(() => _isLoading = false);
+  }
+
+  // FUNÇÃO MODIFICADA: Agora é async e faz login real no Firebase
+  Future<void> _loginFono() async {
+    if (_emailController.text.trim().isEmpty || _senhaFonoController.text.isEmpty) {
       _mostrarErro('Preencha todos os campos! 📋');
       return;
     }
@@ -62,22 +205,49 @@ class _LoginScreenState extends State<LoginScreen> {
       _mostrarErro('E-mail inválido!');
       return;
     }
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PerfilScreen(
-          nomeUsuario: _emailController.text.trim(),
-          tipoPerfil: 'fono',
+
+    setState(() => _isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _senhaFonoController.text.trim(),
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PerfilScreen(
+            nomeUsuario: _emailController.text.trim(),
+            tipoPerfil: 'fono',
+          ),
         ),
-      ),
-    );
+      );
+    } on FirebaseAuthException {
+      _mostrarErro('E-mail ou senha incorretos! Tente novamente. 🛑');
+    }
+
+    setState(() => _isLoading = false);
   }
 
   void _mostrarErro(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: const Color(0xFF7B2FBE),
+        backgroundColor: Colors.redAccent, // Alterado para vermelho para diferenciar do sucesso
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  // NOVA FUNÇÃO: Mensagem de sucesso (verdinha)
+  void _mostrarSucesso(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.green,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -127,7 +297,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildLogo() {
     return Column(
       children: [
-        // Emoji da girafa como ícone do app — grande e infantil
         Container(
           width: 110,
           height: 110,
@@ -143,7 +312,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
           child: const Center(
-            // Emoji nativo da girafa — sem assets externos
             child: Text('🦒', style: TextStyle(fontSize: 62)),
           ),
         ),
@@ -240,21 +408,30 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        _botaoEntrar('Vamos lá! 🚀', _loginCrianca),
-        const SizedBox(height: 12),
-        Center(
-          child: TextButton(
-            onPressed: () => _mostrarErro('Cadastro em breve! 😊'),
-            child: const Text(
-              'Não tenho conta — Criar conta',
-              style: TextStyle(
-                color: Color(0xFF7B2FBE),
-                fontWeight: FontWeight.w600,
-                decoration: TextDecoration.underline,
+        
+        // NOVO: Verifica se está carregando para mostrar botões ou bolinha
+        _isLoading 
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF7B2FBE)))
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _botaoEntrar('Vamos lá! 🚀', _loginCrianca),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: TextButton(
+                      onPressed: _registrarCrianca, // MODIFICADO: Chama o banco real
+                      child: const Text(
+                        'Não tenho conta — Criar conta',
+                        style: TextStyle(
+                          color: Color(0xFF7B2FBE),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -309,7 +486,31 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
         const SizedBox(height: 20),
-        _botaoEntrar('Entrar', _loginFono),
+        
+        // NOVO: Verifica se está carregando para mostrar botões ou bolinha
+        _isLoading 
+            ? const Center(child: CircularProgressIndicator(color: Color(0xFF7B2FBE)))
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _botaoEntrar('Entrar', _loginFono),
+                  const SizedBox(height: 8),
+                  // NOVO: Botão de registro adicionado ao fono!
+                  Center(
+                    child: TextButton(
+                      onPressed: _registrarFono,
+                      child: const Text(
+                        'Novo profissional? Cadastre-se',
+                        style: TextStyle(
+                          color: Color(0xFF7B2FBE),
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ],
     );
   }
@@ -431,8 +632,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Text(
         texto,
-        style:
-            const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
