@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/exercicio.dart';
 import '../models/user_progress.dart';
 import 'home_screen.dart';
-import 'login_screen.dart';
+import 'welcome_screen.dart';
 
 // ==============================================================
 // PERFIL SCREEN — tela central após o login
@@ -135,7 +135,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   void _sair() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
     );
   }
 

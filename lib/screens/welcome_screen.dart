@@ -2,7 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'login_screen.dart';
+import 'access_screen.dart';
+import 'register_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -13,10 +14,16 @@ class WelcomeScreen extends StatelessWidget {
   static const Color _greenAccent = Color(0xFF9BFAB0);
   static const Color _yellowAccent = Color(0xFFFFC067);
 
-  void _openLogin(BuildContext context) {
+  void _openRegister(BuildContext context) {
     Navigator.of(
       context,
-    ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+    ).push(MaterialPageRoute(builder: (_) => const RegisterScreen()));
+  }
+
+  void _openAccess(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AccessScreen()));
   }
 
   @override
@@ -34,8 +41,15 @@ class WelcomeScreen extends StatelessWidget {
             final buttonWidth = math.min(225 * scale, width - (69 * scale * 2));
             final horizontalPadding = math.max(_scale(40, scale), width * 0.11);
             final contentWidth = width - (horizontalPadding * 2);
-            final titleWidth = math.min(_scale(220, scale), contentWidth);
-            final bodyWidth = math.min(_scale(214, scale), contentWidth);
+            final textOffset = _scale(24, scale);
+            final titleWidth = math.min(
+              _scale(220, scale),
+              contentWidth - textOffset,
+            );
+            final bodyWidth = math.min(
+              _scale(214, scale),
+              contentWidth - textOffset,
+            );
             final contentTop = _scale(232, scale);
             final contentBottom = _scale(220, scale);
 
@@ -61,8 +75,8 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      left: _scale(149, scale),
-                      top: _scale(-5, scale),
+                      left: _scale(180, scale),
+                      top: _scale(-50, scale),
                       child: Transform.rotate(
                         angle: 0.62,
                         child: CustomPaint(
@@ -94,10 +108,10 @@ class WelcomeScreen extends StatelessWidget {
                           contentBottom,
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             SizedBox(
-                              width: titleWidth,
+                              width: buttonWidth,
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
@@ -113,8 +127,8 @@ class WelcomeScreen extends StatelessWidget {
                               ),
                             ),
                             SizedBox(height: _scale(12, scale)),
-                            ConstrainedBox(
-                              constraints: BoxConstraints(maxWidth: bodyWidth),
+                            SizedBox(
+                              width: buttonWidth,
                               child: Text(
                                 'Olá Amiguinho!\nPronto para treinar hoje?',
                                 style: TextStyle(
@@ -131,7 +145,7 @@ class WelcomeScreen extends StatelessWidget {
                                 width: buttonWidth,
                                 height: _scale(57, scale),
                                 child: ElevatedButton(
-                                  onPressed: () => _openLogin(context),
+                                  onPressed: () => _openRegister(context),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _primaryColor,
                                     foregroundColor: Colors.white,
@@ -158,7 +172,7 @@ class WelcomeScreen extends StatelessWidget {
                                 width: buttonWidth,
                                 height: _scale(57, scale),
                                 child: OutlinedButton(
-                                  onPressed: () => _openLogin(context),
+                                  onPressed: () => _openAccess(context),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: _accentColor,
                                     side: BorderSide(
