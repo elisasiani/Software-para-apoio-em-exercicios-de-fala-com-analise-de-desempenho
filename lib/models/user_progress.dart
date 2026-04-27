@@ -1,40 +1,95 @@
 import 'package:flutter/foundation.dart';
 
-// ChangeNotifier: permite que esse objeto "avise" as telas
-// quando os dados mudam, sem precisar chamar setState() em todo lugar.
 class UserProgress extends ChangeNotifier {
-  int _streakDays = 3;
-  int _totalStars = 15;
+  UserProgress({DateTime Function()? nowProvider})
+    : _nowProvider = nowProvider ?? DateTime.now;
 
-  // Map que guarda quantos exercícios de cada trilha foram completados
-  // Chave: id da trilha | Valor: índice do último exercício completado
+  final DateTime Function() _nowProvider;
+
+  int _streakDays = 0;
+  int _totalStars = 0;
+
+  // Chave: id da trilha | Valor: quantidade de exercicios concluidos.
   final Map<String, int> _trilhaProgress = {
     'fonemas': 0,
     'trava_linguas': 0,
   };
 
-  // Getters: forma segura de ler os dados de fora da classe
+  // Guarda os dias em que o usuario concluiu pelo menos um exercicio.
+  final Set<String> _diasComExercicio = <String>{};
+
   int get streakDays => _streakDays;
   int get totalStars => _totalStars;
 
-  // Retorna o progresso (0 a 5) de uma trilha específica
   int getProgressoTrilha(String trilhaId) {
     return _trilhaProgress[trilhaId] ?? 0;
   }
 
-  // Chamado quando o usuário completa um exercício
+  bool temAtividadeNaData(DateTime data) {
+    return _diasComExercicio.contains(_dateKey(data));
+  }
+
+  List<bool> getAtividadeSemanaAtual({DateTime? referenceDate}) {
+    final inicio = _inicioDaSemana(_normalizarData(referenceDate ?? _nowProvider()));
+    return List<bool>.generate(
+      7,
+      (index) => temAtividadeNaData(inicio.add(Duration(days: index))),
+    );
+  }
+
   void completarExercicio(String trilhaId) {
     final progressoAtual = _trilhaProgress[trilhaId] ?? 0;
     if (progressoAtual < 5) {
       _trilhaProgress[trilhaId] = progressoAtual + 1;
     }
-    _totalStars += 10; // Ganha 10 estrelas por exercício
-    notifyListeners(); // Avisa as telas para atualizar a UI
+
+    _registrarAtividade(_nowProvider());
+    _totalStars += 10;
+    notifyListeners();
   }
 
-  // Chamado quando o usuário entra no app no dia (lógica simplificada)
   void registrarEntradaDiaria() {
-    _streakDays++;
+    _registrarAtividade(_nowProvider());
     notifyListeners();
+  }
+
+  @visibleForTesting
+  void registrarAtividadeParaTeste(DateTime data) {
+    _registrarAtividade(data);
+    notifyListeners();
+  }
+
+  void _registrarAtividade(DateTime data) {
+    _diasComExercicio.add(_dateKey(data));
+    _streakDays = _calcularSequenciaAtual(_normalizarData(data));
+  }
+
+  int _calcularSequenciaAtual(DateTime referencia) {
+    var total = 0;
+    var cursor = referencia;
+
+    while (temAtividadeNaData(cursor)) {
+      total++;
+      cursor = cursor.subtract(const Duration(days: 1));
+    }
+
+    return total;
+  }
+
+  DateTime _inicioDaSemana(DateTime data) {
+    final diasDesdeDomingo = data.weekday % DateTime.daysPerWeek;
+    return data.subtract(Duration(days: diasDesdeDomingo));
+  }
+
+  DateTime _normalizarData(DateTime data) {
+    return DateTime(data.year, data.month, data.day);
+  }
+
+  String _dateKey(DateTime data) {
+    final normalizada = _normalizarData(data);
+    final ano = normalizada.year.toString().padLeft(4, '0');
+    final mes = normalizada.month.toString().padLeft(2, '0');
+    final dia = normalizada.day.toString().padLeft(2, '0');
+    return '$ano-$mes-$dia';
   }
 }

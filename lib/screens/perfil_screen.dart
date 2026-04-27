@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/exercicio.dart';
 import '../models/user_progress.dart';
 import 'home_screen.dart';
-import 'welcome_screen.dart';
+import 'welcome_screen2.dart';
 
 // ==============================================================
 // PERFIL SCREEN — tela central após o login
@@ -38,12 +38,17 @@ class _PerfilScreenState extends State<PerfilScreen> {
   Widget build(BuildContext context) {
     // As abas mudam dependendo do tipo de perfil
     final bool ehFono = widget.tipoPerfil == 'fono';
+    final bool mostrarHomeCrianca = !ehFono && _abaSelecionada == 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F0FF),
+      backgroundColor: mostrarHomeCrianca
+          ? const Color(0xFFD77CF2)
+          : const Color(0xFFF8F0FF),
 
       // ── AppBar com identidade do Liri ─────────────────────────
-      appBar: AppBar(
+      appBar: mostrarHomeCrianca
+          ? null
+          : AppBar(
         backgroundColor: const Color(0xFF7B2FBE),
         automaticallyImplyLeading: false, // Remove o botão de voltar
         title: Row(
@@ -86,7 +91,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
           : _buildConteudoCrianca(),
 
       // ── Barra de navegação inferior ───────────────────────────
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: mostrarHomeCrianca
+          ? null
+          : BottomNavigationBar(
         currentIndex: _abaSelecionada,
         onTap: (index) => setState(() => _abaSelecionada = index),
         selectedItemColor: const Color(0xFF7B2FBE),
@@ -148,9 +155,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
       builder: (context, progresso, child) {
         switch (_abaSelecionada) {
           case 0:
-            return _AbaTrilhasCrianca(
+            return HomeScreen(
               nomeUsuario: widget.nomeUsuario,
-              progresso: progresso,
+              onTabSelected: (index) => setState(() => _abaSelecionada = index),
             );
           case 1:
             return _AbaRelatorioCrianca(progresso: progresso);
@@ -183,6 +190,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 // ════════════════════════════════════════════════════════════
 //  ABA TRILHAS — CRIANÇA
 // ════════════════════════════════════════════════════════════
+// ignore: unused_element
 class _AbaTrilhasCrianca extends StatelessWidget {
   final String nomeUsuario;
   final UserProgress progresso;

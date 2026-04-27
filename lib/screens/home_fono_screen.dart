@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'welcome_screen.dart';
+import 'welcome_screen2.dart';
 
 // ==============================================================
 // HOME DO FONOAUDIÓLOGO

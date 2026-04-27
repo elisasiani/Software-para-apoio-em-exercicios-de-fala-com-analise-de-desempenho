@@ -76,9 +76,9 @@ class _AccessScreenState extends State<AccessScreen> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      backgroundColor: const Color.fromARGB(255, 231, 201, 238),
-      titleColor: const Color.fromARGB(255, 255, 102, 0),
-      actionColor: const Color.fromARGB(255, 255, 102, 0),
+      backgroundColor: const Color(0xFFC77ADB),
+      titleColor: const Color(0xFFC75000),
+      actionColor: const Color(0xFFC75000),
       title: 'Que bom que voltou!',
       imageAsset: 'assets/images/access_illustration.png',
       primaryActionLabel: 'Acessar',

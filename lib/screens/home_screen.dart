@@ -1,94 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../models/exercicio.dart';
 import '../models/user_progress.dart';
-import '../widgets/mascote_widget.dart';
 import 'trilha_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final String nomeUsuario;
+  const HomeScreen({
+    super.key,
+    this.nomeUsuario = 'Amiguinho',
+    this.onTabSelected,
+  });
 
-  const HomeScreen({super.key, this.nomeUsuario = 'Amiguinho'});
+  final String nomeUsuario;
+  final ValueChanged<int>? onTabSelected;
+
+  static const List<String> _labelsSemana = ['D','S','T','Q','Q','S','S'];
 
   @override
   Widget build(BuildContext context) {
     return Consumer<UserProgress>(
       builder: (context, progresso, child) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF8F0FF),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFF7B2FBE),
-            elevation: 0,
-            title: const Text(
-              'Liri 🦒',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-            actions: [
-              _BadgeResumo(
-                icon: Icons.local_fire_department,
-                value: '${progresso.streakDays}',
-                color: Colors.orange,
-              ),
-              _BadgeResumo(
-                icon: Icons.star_rounded,
-                value: '${progresso.totalStars}',
-                color: Colors.yellow,
-              ),
-              const SizedBox(width: 12),
-            ],
-          ),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Olá, $nomeUsuario! 👋',
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A148C),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'O que vamos treinar hoje?',
-                    style: TextStyle(fontSize: 16, color: Color(0xFF9C27B0)),
-                  ),
-                  const SizedBox(height: 24),
-                  const MascoteWidget(
-                    mensagem:
-                        'Pronta para treinar juntos! Escolha uma trilha! 🌟',
-                    animacao: 'falando',
-                  ),
-                  const SizedBox(height: 28),
-                  _CardProgresso(progresso: progresso),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Suas Trilhas',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A148C),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...DadosApp.trilhas.map(
-                    (trilha) => Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _TrilhaCard(
-                        trilha: trilha,
-                        progresso: progresso.getProgressoTrilha(trilha.id),
+        return DecoratedBox(
+          decoration: const BoxDecoration(color: Color(0xFFF5C6F5)),
+          child: SafeArea(
+            bottom: false,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 460),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: CustomScrollView(
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: _TopSection(nomeUsuario: _formatarNome(nomeUsuario)),
+                          ),
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: _ContentSection(progresso: progresso),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                    SafeArea(
+                      top: false,
+                      child: _HomeBottomBar(onTabSelected: onTabSelected),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -96,35 +60,87 @@ class HomeScreen extends StatelessWidget {
       },
     );
   }
+
+  static String _formatarNome(String valor) {
+    final texto = valor.trim();
+    if (texto.isEmpty) return 'Amiguinho';
+    final base = texto.contains('@') ? texto.split('@').first : texto;
+    final palavras = base
+        .replaceAll(RegExp(r'[._-]+'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (palavras.isEmpty) return 'Amiguinho';
+    return palavras
+        .map((p) => p[0].toUpperCase() + p.substring(1).toLowerCase())
+        .join(' ');
+  }
 }
 
-class _BadgeResumo extends StatelessWidget {
-  const _BadgeResumo({
-    required this.icon,
-    required this.value,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String value;
-  final Color color;
+class _TopSection extends StatelessWidget {
+  const _TopSection({required this.nomeUsuario});
+  final String nomeUsuario;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.fromLTRB(20, 12, 0, 16),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Icon(icon, color: color, size: 26),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          // Texto de saudação — ocupa todo espaço disponível
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Estrela amarela decorativa acima do texto
+                SvgPicture.asset(
+                  'assets/images/home_star_yellow.png',
+                  width: 16,
+                ),
+                const SizedBox(height: 60),
+                Text(
+                  'Olá ${nomeUsuario},',
+                  style: const TextStyle(
+                    color: Color(0xFF4A1A6E),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'O que Vamos Treinar Hoje?',
+                  style: TextStyle(
+                    color: Color(0xFF4A1A6E),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                  ),
+                ),
+              ],
             ),
+          ),
+          // Girafa à direita
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Image.asset(
+                'assets/images/home_giraffe.png',
+                width: 190,
+                fit: BoxFit.contain,
+              ),
+              // Estrela verde ao lado da girafa
+              Positioned(
+                right: 4,
+                bottom: 40,
+                child: SvgPicture.asset(
+                  'assets/images/home_star_green.png',
+                  width: 16,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -132,98 +148,191 @@ class _BadgeResumo extends StatelessWidget {
   }
 }
 
-class _CardProgresso extends StatelessWidget {
-  const _CardProgresso({required this.progresso});
-
+class _ContentSection extends StatelessWidget {
+  const _ContentSection({required this.progresso});
   final UserProgress progresso;
 
   @override
   Widget build(BuildContext context) {
-    final totalFeitos = DadosApp.trilhas
-        .map((trilha) => progresso.getProgressoTrilha(trilha.id))
-        .fold<int>(0, (soma, valor) => soma + valor);
-    final totalPossivel = DadosApp.trilhas.fold<int>(
-      0,
-      (soma, trilha) => soma + trilha.exercicios.length,
-    );
-    final percentual = totalPossivel == 0 ? 0.0 : totalFeitos / totalPossivel;
-
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF7B2FBE), Color(0xFFAB47BC)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFFFCF0FF),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF7B2FBE).withOpacity(0.28),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
       ),
+      padding: const EdgeInsets.fromLTRB(20, 22, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _StreakSection(progresso: progresso),
+          const SizedBox(height: 22),
           const Text(
-            'Seu progresso total',
+            'Suas Trilhas',
             style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              color: Color(0xFF7B2FBE),
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          const SizedBox(height: 14),
+          _TrilhaCard(
+            trilha: DadosApp.trilhas.firstWhere((t) => t.id == 'fonemas'),
+            backgroundColor: const Color(0xFFFFCC80),
+            iconAsset: 'assets/images/home_fonemas_icon.png',
+            progresso: progresso.getProgressoTrilha('fonemas'),
+            total: DadosApp.trilhas.firstWhere((t) => t.id == 'fonemas').exercicios.length,
+          ),
+          const SizedBox(height: 14),
+          _TrilhaCard(
+            trilha: DadosApp.trilhas.firstWhere((t) => t.id == 'trava_linguas'),
+            backgroundColor: const Color(0xFFFFB4DF),
+            iconAsset: 'assets/images/home_trava_icon.png',
+            progresso: progresso.getProgressoTrilha('trava_linguas'),
+            total: DadosApp.trilhas.firstWhere((t) => t.id == 'trava_linguas').exercicios.length,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakSection extends StatelessWidget {
+  const _StreakSection({required this.progresso});
+  final UserProgress progresso;
+
+  @override
+  Widget build(BuildContext context) {
+    final hoje = DateTime.now();
+    final diaAtual = DateTime(hoje.year, hoje.month, hoje.day);
+    final inicioSemana = diaAtual.subtract(
+      Duration(days: diaAtual.weekday % DateTime.daysPerWeek),
+    );
+    final atividadeSemana = progresso.getAtividadeSemanaAtual(referenceDate: diaAtual);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Sua Sequência',
+          style: TextStyle(
+            color: Color(0xFF7B2FBE),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFB8F07A),
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Row(
             children: [
-              Text(
-                '$totalFeitos de $totalPossivel exercícios',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '${(percentual * 100).round()}%',
-                style: const TextStyle(
-                  color: Colors.yellow,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              Image.asset('assets/images/home_streak_fire.png', width: 36),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List<Widget>.generate(
+                    HomeScreen._labelsSemana.length,
+                    (index) {
+                      final data = inicioSemana.add(Duration(days: index));
+                      return _DiaChip(
+                        label: HomeScreen._labelsSemana[index],
+                        concluido: atividadeSemana[index],
+                        ehHoje: _mesmaData(data, diaAtual),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(
-              value: percentual,
-              minHeight: 12,
-              backgroundColor: Colors.white30,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.yellow),
-            ),
-          ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  bool _mesmaData(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+class _DiaChip extends StatelessWidget {
+  const _DiaChip({
+    required this.label,
+    required this.concluido,
+    required this.ehHoje,
+  });
+  final String label;
+  final bool concluido;
+  final bool ehHoje;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color fillColor;
+    final Color borderColor;
+    final Color textColor;
+
+    if (concluido) {
+      fillColor = const Color(0xFF5CAD4E);
+      borderColor = const Color(0xFF5CAD4E);
+      textColor = Colors.white;
+    } else if (ehHoje) {
+      fillColor = Colors.white;
+      borderColor = const Color(0xFF3A7D44);
+      textColor = const Color(0xFF3A7D44);
+    } else {
+      fillColor = Colors.white;
+      borderColor = const Color(0xFFA8D880);
+      textColor = const Color(0xFF6DB56D);
+    }
+
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: fillColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: borderColor, width: 1.8),
+      ),
+      child: Center(
+        child: concluido
+            ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+            : Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
       ),
     );
   }
 }
 
 class _TrilhaCard extends StatelessWidget {
-  const _TrilhaCard({required this.trilha, required this.progresso});
-
+  const _TrilhaCard({
+    required this.trilha,
+    required this.backgroundColor,
+    required this.iconAsset,
+    required this.progresso,
+    required this.total,
+  });
   final Trilha trilha;
+  final Color backgroundColor;
+  final String iconAsset;
   final int progresso;
+  final int total;
 
   @override
   Widget build(BuildContext context) {
-    final totalExercicios = trilha.exercicios.length;
-    final concluida = progresso >= totalExercicios;
+    final double pct = total > 0 ? progresso / total : 0.0;
 
     return GestureDetector(
       onTap: () {
@@ -233,36 +342,27 @@ class _TrilhaCard extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(20),
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: concluida ? Colors.green : const Color(0xFFCE93D8),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(22),
         ),
         child: Row(
           children: [
+            // Icone
             Container(
-              width: 60,
-              height: 60,
+              width: 50,
+              height: 50,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3E5F5),
-                borderRadius: BorderRadius.circular(16),
+                color: Colors.white.withOpacity(0.55),
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Center(
-                child: Text(trilha.emoji, style: const TextStyle(fontSize: 30)),
-              ),
+              padding: const EdgeInsets.all(6),
+              child: Image.asset(iconAsset, fit: BoxFit.contain),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
+            // Texto + barra
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,45 +370,46 @@ class _TrilhaCard extends StatelessWidget {
                   Text(
                     trilha.titulo,
                     style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF4A148C),
+                      color: Color(0xFF5C1A8A),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     trilha.subtitulo,
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF7A4490),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
-                            value: totalExercicios == 0
-                                ? 0
-                                : progresso / totalExercicios,
-                            minHeight: 8,
-                            backgroundColor: const Color(0xFFE1BEE7),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              concluida
-                                  ? Colors.green
-                                  : const Color(0xFF7B2FBE),
+                            value: pct,
+                            minHeight: 5,
+                            backgroundColor: Colors.white.withOpacity(0.6),
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                              Color(0xFF7B2FBE),
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Text(
-                        '$progresso/$totalExercicios',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: concluida
-                              ? Colors.green
-                              : const Color(0xFF7B2FBE),
+                        '$progresso/$total',
+                        style: const TextStyle(
+                          color: Color(0xFF5C1A8A),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
@@ -317,12 +418,93 @@ class _TrilhaCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(
-              concluida
-                  ? Icons.check_circle_rounded
-                  : Icons.chevron_right_rounded,
-              color: concluida ? Colors.green : const Color(0xFF9C27B0),
-              size: 28,
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF7B2FBE),
+              size: 26,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeBottomBar extends StatelessWidget {
+  const _HomeBottomBar({required this.onTabSelected});
+  final ValueChanged<int>? onTabSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Color(0xFFEEDDF8), width: 1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _BottomBarItem(
+            label: 'Trilhas',
+            iconAsset: 'assets/images/home_nav_trilhas.png',
+            selected: true,
+            onTap: () => onTabSelected?.call(0),
+          ),
+          _BottomBarItem(
+            label: 'Relatório',
+            iconAsset: 'assets/images/home_nav_relatorio.png',
+            selected: false,
+            onTap: () => onTabSelected?.call(1),
+          ),
+          _BottomBarItem(
+            label: 'Perfil',
+            iconAsset: 'assets/images/home_nav_perfil.png',
+            selected: false,
+            onTap: () => onTabSelected?.call(2),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomBarItem extends StatelessWidget {
+  const _BottomBarItem({
+    required this.label,
+    required this.iconAsset,
+    required this.selected,
+    required this.onTap,
+  });
+  final String label;
+  final String iconAsset;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(iconAsset, width: 26, fit: BoxFit.contain),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected
+                    ? const Color(0xFF7B2FBE)
+                    : const Color(0xFFAA88CC),
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+              ),
             ),
           ],
         ),
