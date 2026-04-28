@@ -101,7 +101,7 @@ class _TopSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 60),
                 Text(
-                  'Olá ${nomeUsuario},',
+                  'Olá $nomeUsuario,',
                   style: const TextStyle(
                     color: Color(0xFF4A1A6E),
                     fontSize: 18,
