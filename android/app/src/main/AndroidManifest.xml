@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="tcc_software_para_apoio_em_exercicios_de_fala_com_analise_de_desempenho"
         android:name="${applicationName}"
