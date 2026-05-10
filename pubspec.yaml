@@ -34,7 +34,9 @@ dependencies:
   # Provider: gerenciamento de estado (equivalente ao Redux, mas simples)
   # Permite compartilhar o UserProgress entre todas as telas sem passar manualmente
   provider: ^6.1.2
-  flutter_svg: ^2.2.0
+  flutter_svg: ^2.0.0
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -56,6 +58,19 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  fonts:
+    - family: LeagueSpartan
+      fonts:
+        - asset: assets/fonts/LeagueSpartan-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/LeagueSpartan-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/LeagueSpartan-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/LeagueSpartan-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/LeagueSpartan-ExtraBold.ttf
+          weight: 800
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -63,22 +78,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/access_illustration.png
-    - assets/images/home_chevron.png
-    - assets/images/home_fonemas_icon.png
-    - assets/images/home_giraffe.png
-    - assets/images/home_nav_perfil.png
-    - assets/images/home_nav_relatorio.png
-    - assets/images/home_nav_trilhas.png
-    - assets/images/home_sparkle_blue.png
-    - assets/images/home_sparkle_orange.png
-    - assets/images/home_sparkle_yellow.png
-    - assets/images/home_star_green.png
-    - assets/images/home_star_yellow.png
-    - assets/images/home_streak_fire.png
-    - assets/images/home_trava_icon.png
-    - assets/images/register_illustration.png
-    - assets/images/welcome_giraffe.png
+    - assets/images/
+    - assets/fonts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

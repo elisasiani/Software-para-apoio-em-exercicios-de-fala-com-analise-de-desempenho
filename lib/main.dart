@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'models/user_progress.dart';
 import 'screens/welcome_screen2.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(
@@ -18,28 +19,10 @@ class FonoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme =
-        ColorScheme.fromSeed(
-          seedColor: const Color(0xFFBC4ED8),
-          brightness: Brightness.light,
-        ).copyWith(
-          primary: const Color(0xFFBC4ED8),
-          secondary: const Color(0xFF7F00B2),
-          surface: const Color(0xFFFFF0FF),
-        );
-
     return MaterialApp(
       title: 'Liri',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: colorScheme,
-        scaffoldBackgroundColor: const Color(0xFFFFF0FF),
-        textTheme: ThemeData.light().textTheme.apply(
-          bodyColor: const Color(0xFF7F00B2),
-          displayColor: const Color(0xFF7F00B2),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
       home: const WelcomeScreen(),
     );
   }

@@ -198,7 +198,7 @@ class _ExercicioScreenState extends State<ExercicioScreen>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                   ),
@@ -270,132 +270,131 @@ class _ExercicioScreenState extends State<ExercicioScreen>
                       color: _getCorBotaoMic(),
                       boxShadow: [
                         BoxShadow(
-                          color: _getCorBotaoMic().withOpacity(0.4),
+                          color: _getCorBotaoMic().withValues(alpha: 0.4),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      _getIconeMic(),
-                      color: Colors.white,
-                      size: 44,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                _getLabelBotaoMic(),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF7B2FBE),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-    );
-  }
+                          ),
+                          ],
+                          ),
+                          child: Icon(
+                          _getIconeMic(),
+                          color: Colors.white,
+                          size: 44,
+                          ),
+                          ),
+                          ),
+                          ),
+                          ),
+                          const SizedBox(height: 8),
+                          Center(
+                          child: Text(
+                          _getLabelBotaoMic(),
+                          style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF7B2FBE),
+                          fontWeight: FontWeight.w600,
+                          ),
+                          ),
+                          ),
+                          const SizedBox(height: 30),
+                          ],
+                          ),
+                          ),
+                          );
+                          }
 
-  // Helpers para o estado visual dos componentes ↓
+                          // Helpers para o estado visual dos componentes ↓
 
-  String _getMensagemMascote() {
-    switch (_estadoGravacao) {
-      case EstadoGravacao.esperando:
-        return 'Aperte o microfone e diga a palavra! 🎤';
-      case EstadoGravacao.gravando:
-        return 'Estou ouvindo... fala bem claro! 👂';
-      case EstadoGravacao.processando:
-        return 'Deixa eu pensar... 🤔';
-      case EstadoGravacao.acerto:
-        return 'Que incrível! Perfeito! 🎉';
-      case EstadoGravacao.erro:
-        return 'Quase! Tenta de novo, você consegue! 💪';
-    }
-  }
+                          String _getMensagemMascote() {
+                          switch (_estadoGravacao) {
+                          case EstadoGravacao.esperando:
+                          return 'Aperte o microfone e diga a palavra! 🎤';
+                          case EstadoGravacao.gravando:
+                          return 'Estou ouvindo... fala bem claro! 👂';
+                          case EstadoGravacao.processando:
+                          return 'Deixa eu pensar... 🤔';
+                          case EstadoGravacao.acerto:
+                          return 'Que incrível! Perfeito! 🎉';
+                          case EstadoGravacao.erro:
+                          return 'Quase! Tenta de novo, você consegue! 💪';
+                          }
+                          }
 
-  String _getAnimacaoMascote() {
-    switch (_estadoGravacao) {
-      case EstadoGravacao.acerto:
-        return 'comemorando';
-      case EstadoGravacao.gravando:
-        return 'falando';
-      default:
-        return 'idle';
-    }
-  }
+                          String _getAnimacaoMascote() {
+                          switch (_estadoGravacao) {
+                          case EstadoGravacao.acerto:
+                          return 'comemorando';
+                          case EstadoGravacao.gravando:
+                          return 'falando';
+                          default:
+                          return 'idle';
+                          }
+                          }
 
-  Color _getCorBotaoMic() {
-    switch (_estadoGravacao) {
-      case EstadoGravacao.gravando:
-        return Colors.red;
-      case EstadoGravacao.acerto:
-        return Colors.green;
-      case EstadoGravacao.erro:
-        return Colors.orange;
-      default:
-        return const Color(0xFF7B2FBE);
-    }
-  }
+                          Color _getCorBotaoMic() {
+                          switch (_estadoGravacao) {
+                          case EstadoGravacao.gravando:
+                          return Colors.red;
+                          case EstadoGravacao.acerto:
+                          return Colors.green;
+                          case EstadoGravacao.erro:
+                          return Colors.orange;
+                          default:
+                          return const Color(0xFF7B2FBE);
+                          }
+                          }
 
-  IconData _getIconeMic() {
-    switch (_estadoGravacao) {
-      case EstadoGravacao.gravando:
-        return Icons.mic_rounded;
-      case EstadoGravacao.processando:
-        return Icons.hourglass_top_rounded;
-      case EstadoGravacao.acerto:
-        return Icons.check_rounded;
-      case EstadoGravacao.erro:
-        return Icons.refresh_rounded;
-      default:
-        return Icons.mic_none_rounded;
-    }
-  }
+                          IconData _getIconeMic() {
+                          switch (_estadoGravacao) {
+                          case EstadoGravacao.gravando:
+                          return Icons.mic_rounded;
+                          case EstadoGravacao.processando:
+                          return Icons.hourglass_top_rounded;
+                          case EstadoGravacao.acerto:
+                          return Icons.check_rounded;
+                          case EstadoGravacao.erro:
+                          return Icons.refresh_rounded;
+                          default:
+                          return Icons.mic_none_rounded;
+                          }
+                          }
 
-  String _getLabelBotaoMic() {
-    switch (_estadoGravacao) {
-      case EstadoGravacao.gravando:
-        return 'Gravando...';
-      case EstadoGravacao.processando:
-        return 'Processando...';
-      case EstadoGravacao.acerto:
-        return 'Mandou bem! ⭐';
-      case EstadoGravacao.erro:
-        return 'Tente de novo';
-      default:
-        return 'Toque para falar';
-    }
-  }
+                          String _getLabelBotaoMic() {
+                          switch (_estadoGravacao) {
+                          case EstadoGravacao.gravando:
+                          return 'Gravando...';
+                          case EstadoGravacao.processando:
+                          return 'Processando...';
+                          case EstadoGravacao.acerto:
+                          return 'Mandou bem! ⭐';
+                          case EstadoGravacao.erro:
+                          return 'Tente de novo';
+                          default:
+                          return 'Toque para falar';
+                          }
+                          }
 
-  Widget _buildFeedbackEstado() {
-    if (_estadoGravacao == EstadoGravacao.esperando ||
-        _estadoGravacao == EstadoGravacao.processando) {
-      return const SizedBox.shrink(); // Nada para mostrar
-    }
+                          Widget _buildFeedbackEstado() {
+                          if (_estadoGravacao == EstadoGravacao.esperando ||
+                          _estadoGravacao == EstadoGravacao.processando) {
+                          return const SizedBox.shrink(); // Nada para mostrar
+                          }
 
-    final isAcerto = _estadoGravacao == EstadoGravacao.acerto;
+                          final isAcerto = _estadoGravacao == EstadoGravacao.acerto;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      decoration: BoxDecoration(
-        color: isAcerto
-            ? Colors.green.withOpacity(0.15)
-            : Colors.orange.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isAcerto ? Colors.green : Colors.orange,
-          width: 2,
-        ),
-      ),
-      child: Text(
+                          return AnimatedContainer(
+                          duration: const Duration(milliseconds: 400),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                          decoration: BoxDecoration(
+                          color: isAcerto
+                          ? Colors.green.withValues(alpha: 0.15)
+                          : Colors.orange.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                          color: isAcerto ? Colors.green : Colors.orange,
+                          width: 2,
+                          ),
+                          ),      child: Text(
         isAcerto
             ? '✅ Ótima pronúncia! Continue assim!'
             : '🔁 Não desista! Ouça a dica da Girafa e tente novamente.',

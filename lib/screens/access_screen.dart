@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart'; // Importação adicionada
 
-import 'perfil_screen.dart';
-import 'register_screen.dart';
+import '../models/user_progress.dart'; // Importação adicionada
+import 'home_screen.dart';
 
 class AccessScreen extends StatefulWidget {
   const AccessScreen({super.key});
@@ -11,108 +13,190 @@ class AccessScreen extends StatefulWidget {
 }
 
 class _AccessScreenState extends State<AccessScreen> {
-  final _emailController = TextEditingController();
+  final _loginController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _loginController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   void _showMessage(String message) {
+    final theme = Theme.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: const TextStyle(fontFamily: 'LeagueSpartan'),
+        ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF7F00B2),
+        backgroundColor: theme.colorScheme.secondary,
       ),
     );
   }
 
-  String _resolveProfileType(String email) {
-    final normalized = email.toLowerCase();
-    if (normalized.contains('fono') ||
-        normalized.contains('terapeuta') ||
-        normalized.contains('prof')) {
-      return 'fono';
-    }
-    return 'crianca';
-  }
-
-  void _submit() {
-    final email = _emailController.text.trim();
+  void _handleLogin() {
+    final login = _loginController.text.trim();
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      _showMessage('Preencha email e senha para continuar.');
+    if (login.isEmpty || password.isEmpty) {
+      _showMessage('Por favor, informe o login e a senha.');
       return;
     }
 
-    if (!email.contains('@')) {
-      _showMessage('Digite um email válido.');
-      return;
-    }
+    // Após validação bem-sucedida, atualiza o nome do usuário no UserProgress provider
+    // e navega para a HomeScreen.
+    final userProgress = Provider.of<UserProgress>(context, listen: false);
+    userProgress.updateUserName(login);
 
-    Navigator.pushReplacement(
-      context,
+    Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => PerfilScreen(
-          nomeUsuario: email,
-          tipoPerfil: _resolveProfileType(email),
-        ),
+        builder: (_) => const HomeScreen(), // HomeScreen agora obtém o nome do UserProgress
       ),
-    );
-  }
-
-  void _openRegister() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const RegisterScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return AuthScaffold(
-      backgroundColor: const Color(0xFFC77ADB),
-      titleColor: const Color(0xFFC75000),
-      actionColor: const Color(0xFFC75000),
-      title: 'Que bom que voltou!',
-      imageAsset: 'assets/images/access_illustration.png',
-      primaryActionLabel: 'Acessar',
-      onPrimaryAction: _submit,
-      fields: [
-        AuthFieldData(
-          controller: _emailController,
-          hintText: 'Email',
-          textColor: const Color(0xFF7F00B2),
-          keyboardType: TextInputType.emailAddress,
-        ),
-        AuthFieldData(
-          controller: _passwordController,
-          hintText: 'Senha',
-          textColor: const Color(0xFF7F00B2),
-          obscureText: true,
-        ),
-      ],
-      bottomPrompt: const AuthPromptData(
-        leading: 'Não possui uma conta?',
-        action: 'Cadastre-se',
-        leadingColor: Color(0xFF7F00B2),
-      ),
-      onPromptTap: _openRegister,
-      footer: Center(
-        child: GestureDetector(
-          onTap: () => _showMessage('Recuperação de senha em breve.'),
-          child: const Text(
-            'Esqueci minha senha',
-            style: TextStyle(
-              color: Color(0xFF7F00B2),
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+    final theme = Theme.of(context);
+    
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFCE89), // Cor de fundo especificada para AccessScreen
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 32),
+            child: SizedBox(
+              width: 300,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Ilustração do Topo
+                  Center(
+                    child: SizedBox(
+                      height: 200,
+                      child: SvgPicture.asset(
+                        'assets/images/Prancheta3.svg',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  
+                  // Título
+                  Text(
+                    'Que Bom Que Voltou!',
+                    style: TextStyle(
+                      fontFamily: 'LeagueSpartan',
+                      fontSize: 24,
+                      color: theme.colorScheme.secondary,
+                      fontWeight: FontWeight.w600,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Campos de Entrada
+                  _AccessTextField(
+                    controller: _loginController,
+                    hintText: 'Login',
+                  ),
+                  const SizedBox(height: 15),
+                  _AccessTextField(
+                    controller: _passwordController,
+                    hintText: 'Senha',
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 15),
+
+                  // Texto Instrutivo
+                  Text(
+                    'Informe o login e senha que sua fono te passou!',
+                    style: TextStyle(
+                      fontFamily: 'LeagueSpartan',
+                      fontSize: 16, // Mantido de correção anterior
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+
+                  // Botão Principal
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: _handleLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.secondary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Acessar',
+                        style: TextStyle(
+                          fontFamily: 'LeagueSpartan',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccessTextField extends StatelessWidget {
+  const _AccessTextField({
+    required this.controller,
+    required this.hintText,
+    this.obscureText = false,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final bool obscureText;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      style: const TextStyle(
+        fontFamily: 'LeagueSpartan',
+        fontSize: 15,
+      ),
+      decoration: InputDecoration(
+        hintText: hintText,
+        hintStyle: TextStyle(
+          fontFamily: 'LeagueSpartan',
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 15,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: theme.colorScheme.primary,
+            width: 1.5,
           ),
         ),
       ),

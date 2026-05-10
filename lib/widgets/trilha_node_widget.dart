@@ -68,7 +68,7 @@ class TrilhaNodeWidget extends StatelessWidget {
           boxShadow: estado == EstadoNo.disponivel
               ? [
                   BoxShadow(
-                    color: const Color(0xFF7B2FBE).withOpacity(0.4),
+                    color: const Color(0xFF7B2FBE).withValues(alpha: 0.4),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   )

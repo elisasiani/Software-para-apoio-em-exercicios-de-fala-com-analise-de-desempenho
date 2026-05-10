@@ -78,7 +78,7 @@ class _MascoteWidgetState extends State<MascoteWidget>
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF7B2FBE).withOpacity(0.15),
+              color: const Color(0xFF7B2FBE).withValues(alpha: 0.15),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),

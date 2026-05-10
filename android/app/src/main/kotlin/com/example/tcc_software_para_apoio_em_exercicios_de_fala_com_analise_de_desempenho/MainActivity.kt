@@ -2,4 +2,4 @@ package com.example.tcc_software_para_apoio_em_exercicios_de_fala_com_analise_de
 
 import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity : FlutterActivity()
+class MainActivity: FlutterActivity()

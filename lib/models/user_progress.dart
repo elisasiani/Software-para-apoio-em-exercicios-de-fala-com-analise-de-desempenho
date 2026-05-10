@@ -6,6 +6,7 @@ class UserProgress extends ChangeNotifier {
 
   final DateTime Function() _nowProvider;
 
+  String _userName = ''; // Adicionado campo para nome do usuário
   int _streakDays = 0;
   int _totalStars = 0;
 
@@ -18,11 +19,18 @@ class UserProgress extends ChangeNotifier {
   // Guarda os dias em que o usuario concluiu pelo menos um exercicio.
   final Set<String> _diasComExercicio = <String>{};
 
+  String get userName => _userName; // Getter para o nome do usuário
+
   int get streakDays => _streakDays;
   int get totalStars => _totalStars;
 
   int getProgressoTrilha(String trilhaId) {
     return _trilhaProgress[trilhaId] ?? 0;
+  }
+
+  void updateUserName(String name) { // Método para atualizar o nome do usuário
+    _userName = name;
+    notifyListeners();
   }
 
   bool temAtividadeNaData(DateTime data) {
