@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'welcome_screen2.dart';
 
 // ==============================================================
 // HOME DO FONOAUDIÓLOGO
@@ -36,7 +36,7 @@ class HomeFonoScreen extends StatelessWidget {
               // o profissional não consegue voltar com o botão de voltar
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
               );
             },
           ),

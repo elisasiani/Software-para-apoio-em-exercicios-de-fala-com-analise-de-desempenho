@@ -34,14 +34,20 @@ dependencies:
   # Provider: gerenciamento de estado (equivalente ao Redux, mas simples)
   # Permite compartilhar o UserProgress entre todas as telas sem passar manualmente
   provider: ^6.1.2
+  flutter_svg: ^2.0.0
+  firebase_core: ^3.0.0
+  firebase_auth: ^5.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  cloud_firestore: ^6.3.0  
+<<<<<<< HEAD
+  cloud_firestore: ^6.3.0
   firebase_core: ^4.7.0
   firebase_auth: ^6.4.0
   speech_to_text: ^6.6.0
+=======
+>>>>>>> origin/frontend
 
 dev_dependencies:
   flutter_test:
@@ -59,11 +65,28 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  fonts:
+    - family: LeagueSpartan
+      fonts:
+        - asset: assets/fonts/LeagueSpartan-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/LeagueSpartan-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/LeagueSpartan-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/LeagueSpartan-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/LeagueSpartan-ExtraBold.ttf
+          weight: 800
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/fonts/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

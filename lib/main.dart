@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // NOVO: Importação do Firebase
-import 'firebase_options.dart'; // NOVO: Importação das configurações que você gerou
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'models/user_progress.dart';
 import 'package:provider/provider.dart';
 
-void main() async { // ALTERADO: Adicionado 'async'
-  // 1. Garante que os plugins do Flutter estejam prontos
-  WidgetsFlutterBinding.ensureInitialized();
+import 'models/user_progress.dart';
+import 'screens/welcome_screen2.dart';
+import 'theme/app_theme.dart';
 
-  // 2. Inicializa o Firebase antes de rodar o App
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+void main() {
   runApp(
     ChangeNotifierProvider(
       create: (context) => UserProgress(),
@@ -31,17 +22,8 @@ class FonoApp extends StatelessWidget {
     return MaterialApp(
       title: 'Liri',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7B2FBE),
-          primary: const Color(0xFF7B2FBE),
-          secondary: const Color(0xFFCE93D8),
-          surface: const Color(0xFFF8F0FF),
-        ),
-        fontFamily: 'Nunito',
-      ),
-      home: const LoginScreen(),
+      theme: AppTheme.lightTheme,
+      home: const WelcomeScreen(),
     );
   }
 }
