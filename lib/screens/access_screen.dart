@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart'; // Importação adicionada
-
-import '../models/user_progress.dart'; // Importação adicionada
+import 'package:provider/provider.dart'; 
+import '../models/user_progress.dart'; 
 import 'home_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class AccessScreen extends StatefulWidget {
   const AccessScreen({super.key});
@@ -37,7 +38,7 @@ class _AccessScreenState extends State<AccessScreen> {
     );
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     final login = _loginController.text.trim();
     final password = _passwordController.text;
 
@@ -46,16 +47,48 @@ class _AccessScreenState extends State<AccessScreen> {
       return;
     }
 
-    // Após validação bem-sucedida, atualiza o nome do usuário no UserProgress provider
-    // e navega para a HomeScreen.
-    final userProgress = Provider.of<UserProgress>(context, listen: false);
-    userProgress.updateUserName(login);
+    try {
+      print("=== INICIANDO TENTATIVA DE LOGIN POR CAMPO ===");
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const HomeScreen(), // HomeScreen agora obtém o nome do UserProgress
-      ),
-    );
+      // ALTERAÇÃO AQUI: Em vez de buscar pelo ID do documento, 
+      // filtramos a coleção procurando onde o CAMPO 'login' é igual ao digitado
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('pacientes')
+          .where('Login Paciente', isEqualTo: login)
+          .get();
+
+      // Se a lista de documentos encontrados não estiver vazia
+      if (querySnapshot.docs.isNotEmpty) {
+        // Pegamos o primeiro paciente encontrado com esse login
+        var doc = querySnapshot.docs.first;
+        var dados = doc.data();
+
+        // Verifica a senha
+        if (dados['Senha Paciente'] == password) {
+          
+          // Sucesso! Atualiza o Provider usando o NOME REAL
+          final userProgress = Provider.of<UserProgress>(context, listen: false);
+          userProgress.updateUserName(dados['Nome'] ?? login);
+
+          // Navega para a HomeScreen
+          if (mounted) { 
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => const HomeScreen(),
+              ),
+            );
+          }
+        } else {
+          _showMessage('Senha incorreta. Tente novamente.');
+        }
+      } else {
+        // Se a busca pelo campo 'login' não retornou nenhum documento
+        _showMessage('Paciente não encontrado. Verifique o login.');
+      }
+    } catch (e) {
+      _showMessage('Erro de conexão. Tente novamente mais tarde.');
+      print("Erro detalhado do Firebase: $e");
+    }
   }
 
   @override

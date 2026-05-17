@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.tcc_software_para_apoio_em_exercicios_de_fala_com_analise_de_desempenho"
+        applicationId = "1:441545837283:android:c38c8d7df6d95e5380d3d6"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
