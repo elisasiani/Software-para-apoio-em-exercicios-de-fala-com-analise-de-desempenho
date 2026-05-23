@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastrar Paciente - Liri</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="novopaciente.css">
+</head>
+<body>
+  <header class="topo-cadastro">
+    <div class="topo-cadastro-info">
+      <a href="dashboard.html" class="cabecalho-logo">
+        <img class="logo-imagem" src="/img/girafa.png" alt="Girafa Liri">
+        <span class="logo-texto">Liri</span>
+      </a>
+      <div class="topo-cadastro-texto">
+        <span class="topo-cadastro-titulo">Cadastrar paciente</span>
+      </div>
+    </div>
+
+    <a href="dashboard.html" class="botao-secundario">Voltar ao dashboard</a>
+  </header>
+
+  <main class="conteudo-cadastro">
+    <section id="page-step1" class="pagina-etapa ativo">
+      <header class="pagina-cabecalho">
+        <h1 class="titulo-pagina">Novo Paciente</h1>
+        <p class="subtitulo-pagina">Preencha os dados e depois selecione os exercicios prescritos.</p>
+      </header>
+
+      <div class="indicador-progresso">
+        <div class="etapa-item">
+          <div class="circulo-etapa ativo">1</div>
+          <span class="legenda-etapa ativo">Dados</span>
+        </div>
+        <div class="linha-etapa"></div>
+        <div class="etapa-item">
+          <div class="circulo-etapa">2</div>
+          <span class="legenda-etapa">Exercicios</span>
+        </div>
+        <div class="linha-etapa"></div>
+        <div class="etapa-item">
+          <div class="circulo-etapa">3</div>
+          <span class="legenda-etapa">Confirmacao</span>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cartao-topo">
+          <div>
+            <h2 class="cartao-titulo">Dados pessoais</h2>
+            <p class="cartao-subtitulo">Informacoes da crianca</p>
+          </div>
+        </div>
+
+        <div class="cartao-corpo">
+          <div class="grade-formulario">
+            <div class="campo-grupo largura-total">
+              <label class="campo-etiqueta" for="nome">Nome completo <span>*</span></label>
+              <input class="campo-entrada" id="nome" type="text" placeholder="Nome da crianca" required>
+            </div>
+
+            <div class="campo-grupo">
+              <label class="campo-etiqueta" for="dataNasc">Data de nascimento</label>
+              <input class="campo-entrada" id="dataNasc" type="date">
+            </div>
+
+            <div class="campo-grupo">
+              <label class="campo-etiqueta" for="sexo">Sexo</label>
+              <select class="campo-selecao" id="sexo">
+                <option value="">Selecione</option>
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+                <option value="O">Outro</option>
+              </select>
+            </div>
+
+            <div class="campo-grupo largura-total">
+              <label class="campo-etiqueta" for="obs">Observacoes clinicas</label>
+              <textarea class="campo-area-texto" id="obs" rows="4" placeholder="Dificuldades identificadas..."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cartao-topo">
+          <div>
+            <h2 class="cartao-titulo">Responsavel e acesso</h2>
+            <p class="cartao-subtitulo">Dados usados para contato e entrada no aplicativo.</p>
+          </div>
+        </div>
+
+        <div class="cartao-corpo">
+          <div class="grade-formulario">
+            <div class="campo-grupo">
+              <label class="campo-etiqueta" for="nomeResp">Responsavel <span>*</span></label>
+              <input class="campo-entrada" id="nomeResp" type="text" placeholder="Nome do responsavel" required>
+            </div>
+
+            <div class="campo-grupo">
+              <label class="campo-etiqueta" for="telefone">Telefone</label>
+              <input class="campo-entrada" id="telefone" type="tel" placeholder="(00) 00000-0000">
+            </div>
+
+            <div class="campo-grupo">
+              <label class="campo-etiqueta" for="loginUsuario">Login do app <span>*</span></label>
+              <input class="campo-entrada" id="loginUsuario" type="text" placeholder="paciente.123" required>
+            </div>
+
+            <div class="campo-grupo">
+              <label class="campo-etiqueta" for="senhaTemp">Senha <span>*</span></label>
+              <input class="campo-entrada" id="senhaTemp" type="text" placeholder="Liri@123" required>
+            </div>
+          </div>
+
+          <button class="botao-secundario botao-pequeno" type="button" onclick="gerarCredenciais()">Gerar credenciais</button>
+        </div>
+      </div>
+
+      <div class="acoes-formulario">
+        <a href="dashboard.html" class="botao-secundario">Cancelar</a>
+        <button class="botao-primario" type="button" onclick="irParaStep2()">Proximo - Exercicios</button>
+      </div>
+    </section>
+
+    <section id="page-step2" class="pagina-etapa">
+      <header class="pagina-cabecalho">
+        <h1 class="titulo-pagina">Exercicios para <span id="nome-paciente-step2">paciente</span></h1>
+        <p class="subtitulo-pagina">Escolha os exercicios que serao prescritos.</p>
+      </header>
+
+      <div class="indicador-progresso">
+        <div class="etapa-item">
+          <div class="circulo-etapa concluido">1</div>
+          <span class="legenda-etapa concluido">Dados</span>
+        </div>
+        <div class="linha-etapa concluida"></div>
+        <div class="etapa-item">
+          <div class="circulo-etapa ativo">2</div>
+          <span class="legenda-etapa ativo">Exercicios</span>
+        </div>
+        <div class="linha-etapa"></div>
+        <div class="etapa-item">
+          <div class="circulo-etapa">3</div>
+          <span class="legenda-etapa">Confirmacao</span>
+        </div>
+      </div>
+
+      <div class="area-exercicios">
+        <section class="painel-catalogo">
+          <div class="barra-filtros">
+            <input class="campo-entrada busca-exercicio" id="search-ex" type="search" placeholder="Buscar por titulo ou fonema" oninput="filtrarExercicios()">
+            <button class="filtro-botao ativo" type="button" onclick="setFiltro('todos', this)">Todos</button>
+            <button class="filtro-botao" type="button" onclick="setFiltro('fonema', this)">Fonemas</button>
+            <button class="filtro-botao" type="button" onclick="setFiltro('silaba', this)">Silabas</button>
+            <button class="filtro-botao" type="button" onclick="setFiltro('palavra', this)">Palavras</button>
+            <button class="filtro-botao" type="button" onclick="setFiltro('frase', this)">Frases</button>
+            <button class="filtro-botao" type="button" onclick="setFiltro('custom', this)">Personalizados</button>
+          </div>
+
+          <div class="grade-exercicios" id="exercises-grid"></div>
+        </section>
+
+        <aside class="painel-selecionados">
+          <div class="selecionados-topo">
+            <h2 class="cartao-titulo">Selecionados</h2>
+            <span class="contador-selecionados" id="selected-count">0</span>
+          </div>
+          <div class="lista-selecionados" id="selected-list"></div>
+          <button class="botao-secundario largura-total" type="button" onclick="abrirModalCustom()">Criar exercicio</button>
+        </aside>
+      </div>
+
+      <div class="acoes-formulario">
+        <button class="botao-secundario" type="button" onclick="voltarStep1()">Voltar</button>
+        <button class="botao-primario" type="button" onclick="irParaStep3()">Proximo - Confirmacao</button>
+      </div>
+    </section>
+
+    <section id="page-step3" class="pagina-etapa">
+      <header class="pagina-cabecalho">
+        <h1 class="titulo-pagina">Confirmar cadastro</h1>
+        <p class="subtitulo-pagina">Revise os dados antes de salvar.</p>
+      </header>
+
+      <div class="indicador-progresso">
+        <div class="etapa-item">
+          <div class="circulo-etapa concluido">1</div>
+          <span class="legenda-etapa concluido">Dados</span>
+        </div>
+        <div class="linha-etapa concluida"></div>
+        <div class="etapa-item">
+          <div class="circulo-etapa concluido">2</div>
+          <span class="legenda-etapa concluido">Exercicios</span>
+        </div>
+        <div class="linha-etapa concluida"></div>
+        <div class="etapa-item">
+          <div class="circulo-etapa ativo">3</div>
+          <span class="legenda-etapa ativo">Confirmacao</span>
+        </div>
+      </div>
+
+      <div class="cartao">
+        <div class="cartao-topo">
+          <div>
+            <h2 class="cartao-titulo">Resumo do paciente</h2>
+            <p class="cartao-subtitulo">Dados que serao cadastrados.</p>
+          </div>
+        </div>
+        <div class="cartao-corpo">
+          <div class="confirmacao-corpo" id="confirm-body"></div>
+          <div class="confirmacao-exercicios" id="confirm-exercicios"></div>
+        </div>
+      </div>
+
+      <div class="acoes-formulario">
+        <button class="botao-secundario" type="button" onclick="voltarStep2()">Voltar</button>
+        <button class="botao-primario btn-success" type="button" onclick="salvarPaciente()">Salvar paciente</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-custom" id="modal-custom">
+    <div class="modal-caixa" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+      <div class="modal-topo">
+        <h2 class="cartao-titulo" id="modal-titulo">Exercicio personalizado</h2>
+        <button class="botao-icone" type="button" onclick="fecharModalCustom()" aria-label="Fechar">x</button>
+      </div>
+
+      <div class="grade-formulario">
+        <div class="campo-grupo largura-total">
+          <label class="campo-etiqueta" for="custom-titulo">Titulo</label>
+          <input class="campo-entrada" id="custom-titulo" type="text">
+        </div>
+        <div class="campo-grupo">
+          <label class="campo-etiqueta" for="custom-tipo">Tipo</label>
+          <select class="campo-selecao" id="custom-tipo">
+            <option value="fonema">Fonema</option>
+            <option value="silaba">Silaba</option>
+            <option value="palavra">Palavra</option>
+            <option value="frase">Frase</option>
+          </select>
+        </div>
+        <div class="campo-grupo">
+          <label class="campo-etiqueta" for="custom-nivel">Nivel</label>
+          <select class="campo-selecao" id="custom-nivel">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+        <div class="campo-grupo largura-total">
+          <label class="campo-etiqueta" for="custom-fonema">Fonema</label>
+          <input class="campo-entrada" id="custom-fonema" type="text" placeholder="/r/">
+        </div>
+        <div class="campo-grupo largura-total">
+          <label class="campo-etiqueta" for="custom-desc">Descricao</label>
+          <textarea class="campo-area-texto" id="custom-desc" rows="3"></textarea>
+        </div>
+      </div>
+
+      <div class="acoes-formulario">
+        <button class="botao-secundario" type="button" onclick="fecharModalCustom()">Cancelar</button>
+        <button class="botao-primario" type="button" onclick="salvarCustom()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="notificacao" id="toast">
+    <span id="toast-msg">Salvo com sucesso!</span>
+  </div>
+
+  <script type="module" src="novopaciente-firebase.js"></script>
+  <script src="novopaciente.js"></script>
+</body>
+</html>
