@@ -53,6 +53,7 @@ class FirestoreService {
     required String palavraAlvo,
     required bool acertou,
     int tentativas = 1,
+    required String urlAudio,
   }) async {
     await _db.collection('progresso_exercicios').add({
       'paciente_id':     pacienteId,
@@ -62,6 +63,7 @@ class FirestoreService {
       'acertou':         acertou,
       'tentativas':      tentativas,
       'concluido_em':    FieldValue.serverTimestamp(),
+      'urlAudio': urlAudio,
     });
   }
 

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:flutter_tts/flutter_tts.dart';
 import '../models/exercicio.dart';
 import '../models/user_progress.dart';
 import '../services/firestore_service.dart';
 import '../widgets/mascote_widget.dart';
+import 'package:record/record.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path_provider/path_provider.dart'; // Para achar uma pasta temporária no celular
+import 'dart:io';// Para manipular o arquivo de áudio
 
 // Enum para os estados da gravação de voz
 enum EstadoGravacao { esperando, gravando, processando, acerto, erro }
@@ -32,6 +36,24 @@ class _ExercicioScreenState extends State<ExercicioScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
+  //Aqui foi adicionado a variável do TTS para conseguir ouvir a palavra antes de repetir
+  final FlutterTts _flutterTts = FlutterTts();
+
+  // criando a var que é a instância do gravador e a var que vai guardar o caminho do aúdio
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  String? _caminhoAudioLocal;
+
+  Future<void> _ouvirExemplo() async {
+    // Configura para português do Brasil
+    await _flutterTts.setLanguage("pt-BR");
+    // set.SpeechRate define a velocidade da voz
+    await _flutterTts.setSpeechRate(0.6); 
+    // setPitch é o que deixa mais suave/feminino ou não
+    await _flutterTts.setPitch(1.2);
+    // Faz o celular falar a palavra que veio do banco de dados
+    await _flutterTts.speak(widget.exercicio.palavraAlvo);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -50,44 +72,82 @@ class _ExercicioScreenState extends State<ExercicioScreen>
   @override
   void dispose() {
     _pulseController.dispose();
+    _audioRecorder.dispose();
     super.dispose();
   }
 
-  // Simula a gravação (placeholder até integrar speech_to_text)
+  // 1. INICIA A GRAVAÇÃO REAL DO MICROFONE
   Future<void> _iniciarGravacao() async {
-    setState(() => _estadoGravacao = EstadoGravacao.gravando);
-    _pulseController.repeat(reverse: true);
-    _tentativas++;
-
-    await Future.delayed(const Duration(seconds: 2));
-    setState(() => _estadoGravacao = EstadoGravacao.processando);
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    // TODO: substituir pela lógica real de reconhecimento
-    final bool acertou = DateTime.now().second % 2 == 0;
-
-    _pulseController.stop();
-    setState(() =>
-        _estadoGravacao = acertou ? EstadoGravacao.acerto : EstadoGravacao.erro);
-
-    // Registra TODA tentativa no Firestore — a fono acompanha tanto acertos
-    // quanto erros para avaliar a evolução do paciente.
     try {
-      await FirestoreService.instance.registrarConclusaoExercicio(
-        pacienteId:     widget.pacienteId,
-        profissionalId: widget.exercicio.profissionalId,
-        prescricaoId:   widget.exercicio.id,
-        palavraAlvo:    widget.exercicio.palavraAlvo,
-        acertou:        acertou,
-        tentativas:     _tentativas,
-      );
-    } catch (e) {
-      debugPrint('Erro ao registrar progresso: $e');
-    }
+      if (await _audioRecorder.hasPermission()) {
+        // Define um local temporário no celular para salvar o arquivo de áudio antes do upload
+        final pastaTemp = await getTemporaryDirectory();
+        final caminhoCompleto = '${pastaTemp.path}/audio_tcc_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
-    if (acertou && mounted) {
-      _mostrarDialogoSucesso();
+        await _audioRecorder.start(
+          const RecordConfig(encoder: AudioEncoder.aacLc), 
+          path: caminhoCompleto
+        );
+
+        setState(() {
+          _estadoGravacao = EstadoGravacao.gravando;
+        });
+        _pulseController.repeat(reverse: true);
+        _tentativas++;
+      }
+    } catch (e) {
+      debugPrint('Erro ao iniciar gravação: $e');
     }
+  }
+
+  // 2. PARA A GRAVAÇÃO E FAZ O PROCESSO DE ENVIO
+  Future<void> _pararEEnviarGravacao() async {
+    try {
+      final caminhoArquivoLocal = await _audioRecorder.stop();
+      _pulseController.stop();
+
+      if (caminhoArquivoLocal != null) {
+        setState(() => _estadoGravacao = EstadoGravacao.processando);
+
+        // Envia o arquivo para o Firebase Storage e pega o link de retorno
+        String urlAudioFirebase = await _uploadAudioParaFirebase(caminhoArquivoLocal);
+
+        // Salva os dados no Firestore (Dica: avise as meninas para adicionarem o campo urlAudio no método delas se necessário)
+        await FirestoreService.instance.registrarConclusaoExercicio(
+          pacienteId:     widget.pacienteId,
+          profissionalId: widget.exercicio.profissionalId,
+          prescricaoId:   widget.exercicio.id,
+          palavraAlvo:    widget.exercicio.palavraAlvo,
+          acertou:        true, // Sempre verdadeiro para a criança, pois ela concluiu o envio!
+          tentativas:     _tentativas,
+          urlAudio:    urlAudioFirebase, //Adiciona a url da voz do microfone ao firebase
+        );
+
+        setState(() => _estadoGravacao = EstadoGravacao.acerto);
+
+        if (mounted) {
+          _mostrarDialogoSucesso();
+        }
+      }
+    } catch (e) {
+      setState(() => _estadoGravacao = EstadoGravacao.erro);
+      debugPrint('Erro ao parar ou enviar gravação: $e');
+    }
+  }
+
+  // 3. FAZ O UPLOAD DO ARQUIVO .M4A PARA O STORAGE
+  Future<String> _uploadAudioParaFirebase(String caminhoLocal) async {
+    File arquivo = File(caminhoLocal);
+    String nomeArquivo = "audio_${widget.pacienteId}_${DateTime.now().millisecondsSinceEpoch}.m4a";
+    
+    // Cria a referência da pasta dentro do Firebase Storage
+    Reference ref = FirebaseStorage.instance.ref().child('audios_exercicios').child(nomeArquivo);
+    
+    UploadTask uploadTask = ref.putFile(arquivo);
+    TaskSnapshot snapshot = await uploadTask;
+    
+    // Retorna a URL pública do áudio para a fonoaudióloga escutar na Web
+    return await snapshot.ref.getDownloadURL();
   }
 
   void _mostrarDialogoSucesso() {
@@ -209,6 +269,25 @@ class _ExercicioScreenState extends State<ExercicioScreen>
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
+
+                    // O botão está sendo implementado aqui para ouvir a voz falando a palavra
+                    ElevatedButton.icon(
+                      onPressed: _ouvirExemplo,
+                      icon: const Icon(Icons.volume_up_rounded),
+                      label: const Text('Ouvir Exemplo'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEDE7F6),
+                        foregroundColor: const Color(0xFF7B2FBE),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // ---------------------------------
+
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
@@ -238,10 +317,14 @@ class _ExercicioScreenState extends State<ExercicioScreen>
                       ? _pulseAnimation
                       : const AlwaysStoppedAnimation(1.0),
                   child: GestureDetector(
-                    onTap: _estadoGravacao == EstadoGravacao.esperando ||
-                            _estadoGravacao == EstadoGravacao.erro
-                        ? _iniciarGravacao
-                        : null,
+                    // COMO DEVE FICAR:
+                    onTap: () {
+                      if (_estadoGravacao == EstadoGravacao.esperando || _estadoGravacao == EstadoGravacao.erro) {
+                        _iniciarGravacao();
+                      } else if (_estadoGravacao == EstadoGravacao.gravando) {
+                        _pararEEnviarGravacao();
+                      }
+                    },
                     child: Container(
                       width: 90,
                       height: 90,
