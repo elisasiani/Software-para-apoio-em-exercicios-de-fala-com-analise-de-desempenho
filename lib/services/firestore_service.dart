@@ -53,8 +53,9 @@ class FirestoreService {
     required String palavraAlvo,
     required bool acertou,
     int tentativas = 1,
+    String? audioBase64,   // ← NOVO: áudio gravado (opcional)
   }) async {
-    await _db.collection('progresso_exercicios').add({
+    final dados = <String, dynamic>{
       'paciente_id':     pacienteId,
       'profissional_id': profissionalId,
       'prescricao_id':   prescricaoId,
@@ -62,7 +63,18 @@ class FirestoreService {
       'acertou':         acertou,
       'tentativas':      tentativas,
       'concluido_em':    FieldValue.serverTimestamp(),
-    });
+    };
+
+    // Só inclui o campo de áudio se ele foi enviado
+    if (audioBase64 != null && audioBase64.isNotEmpty) {
+      dados['audio_base64'] = audioBase64;
+      dados['audio_formato'] = 'audio/mp4'; // AAC dentro de container MP4
+      dados['tem_audio']     = true;
+    } else {
+      dados['tem_audio'] = false;
+    }
+
+    await _db.collection('progresso_exercicios').add(dados);
   }
 
   /// IDs dos exercícios que o paciente já concluiu (acertou).
