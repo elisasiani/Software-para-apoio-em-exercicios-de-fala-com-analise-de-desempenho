@@ -12,7 +12,8 @@
       "Read(//c/Users/vital/AppData/Local/Pub/Cache/hosted/**)",
       "Bash(dart pub *)",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(p['name'],p['version']\\) for p in d.get\\('packages',[]\\)]\")",
-      "Bash(findstr record *)"
+      "Bash(findstr record *)",
+      "Bash(del \"C:\\\\Users\\\\vital\\\\Downloads\\\\Software-para-apoio-em-exercicios-de-fala-com-analise-de-desempenho\\\\pubspec.lock\")"
     ]
   }
 }
