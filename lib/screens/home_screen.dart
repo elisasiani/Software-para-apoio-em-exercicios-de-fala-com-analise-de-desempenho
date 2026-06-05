@@ -7,6 +7,7 @@ import '../models/exercicio.dart';
 import '../services/firestore_service.dart';
 import 'exercicio_screen.dart';
 import 'access_screen.dart';
+import 'relatorios_screen.dart';
 
 /// Tela inicial do paciente — agora mostra a LISTA de exercícios prescritos
 /// pela fonoaudióloga (lidos do Firestore em tempo real), sem trilhas.
@@ -100,11 +101,20 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          if (index == 2) {
-            // Aba "Perfil" → opção de sair
+          if (index == 0) {
+            // Já está na Home — não faz nada
+            setState(() => _currentIndex = 0);
+          } else if (index == 1) {
+            // Relatório → abre a tela de relatórios
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => RelatoriosScreen(pacienteId: widget.pacienteId),
+              ),
+            );
+          } else if (index == 2) {
+            // Perfil → menu de sair
             _abrirMenuPerfil();
-          } else {
-            setState(() => _currentIndex = index);
           }
         },
         selectedItemColor: const Color(0xFF7B2FBE),

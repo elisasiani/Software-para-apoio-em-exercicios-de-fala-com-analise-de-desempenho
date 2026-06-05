@@ -251,14 +251,14 @@ class _ExercicioScreenState extends State<ExercicioScreen>
                   color: const Color(0xFFFFE0B2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('⭐', style: TextStyle(fontSize: 20)),
-                    SizedBox(width: 6),
+                    const Text('⭐', style: TextStyle(fontSize: 20)),
+                    const SizedBox(width: 6),
                     Text(
-                      '+10 estrelas',
-                      style: TextStyle(
+                      '+${_pontosDoExercicio()} estrelas',
+                      style: const TextStyle(
                         fontFamily: 'LeagueSpartan',
                         fontWeight: FontWeight.bold,
                         color: Color(0xFFEF6C00),
@@ -780,6 +780,18 @@ class _ExercicioScreenState extends State<ExercicioScreen>
       case 'difícil':       return '🔴';
       case 'personalizado': return '✏️';
       default:              return '⭐';
+    }
+  }
+
+  /// Pontuação ganha ao concluir o exercício, conforme dificuldade.
+  /// Mesma lógica usada na tela de Relatórios para calcular o total.
+  int _pontosDoExercicio() {
+    switch (widget.exercicio.dificuldade) {
+      case 'fácil':         return 10;
+      case 'médio':         return 20;
+      case 'difícil':       return 30;
+      case 'personalizado': return 15;
+      default:              return 10;
     }
   }
 }
