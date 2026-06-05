@@ -99,6 +99,9 @@ function renderExercicios() {
   if (exerciciosPersonalizados.length > 0) {
     exerciciosPersonalizados.forEach(ex => {
       const sel = selecionados.find(s => s.trilhaId === 'custom' && s.exercicio.id === ex.id);
+      // Fallback caso seja um exercício custom antigo sem o campo dificuldade
+      const mapaNivel = { 1: 'fácil', 2: 'médio', 3: 'difícil' };
+      const dif = ex.dificuldade || mapaNivel[ex.nivel] || 'fácil';
       html += `
         <button class="cartao-exercicio ${sel ? 'selecionado' : ''}" type="button"
           onclick="togglePalavra('custom', '${ex.id}')">
@@ -106,7 +109,7 @@ function renderExercicios() {
           <div class="exercicio-titulo">${ex.titulo}</div>
           <div class="exercicio-descricao">${ex.desc}</div>
           <div class="exercicio-meta">
-            <span class="exercicio-fonema">${ex.fonema}</span>
+            <span class="exercicio-fonema">${difLabels[dif] || ''} ${dif}</span>
           </div>
         </button>`;
     });
@@ -129,7 +132,11 @@ function togglePalavra(trilhaId, exId) {
     const ex = exerciciosPersonalizados.find(e => e.id == exId);
     if (!ex) return;
     const idx = selecionados.findIndex(s => s.trilhaId === 'custom' && s.exercicio.id == exId);
-    if (idx === -1) selecionados.push({ trilhaId: 'custom', trilhaTitulo: 'Personalizado', trilhaEmoji: '✏️', trilhaTipo: ex.tipo, trilhaFonema: ex.fonema, exercicio: { id: ex.id, palavraAlvo: ex.titulo, instrucao: ex.desc, dificuldade: 'personalizado', dicaAnimacao: '' } });
+    if (idx === -1) {
+      const mapaNivel = { 1: 'fácil', 2: 'médio', 3: 'difícil' };
+      const dif = ex.dificuldade || mapaNivel[ex.nivel] || 'fácil';
+      selecionados.push({ trilhaId: 'custom', trilhaTitulo: 'Personalizado', trilhaEmoji: '✏️', trilhaTipo: ex.tipo, trilhaFonema: ex.fonema, exercicio: { id: ex.id, palavraAlvo: ex.titulo, instrucao: ex.desc, dificuldade: dif, dicaAnimacao: '' } });
+    }
     else selecionados.splice(idx, 1);
   } else {
     const trilha = catalogoTrilhas.find(t => t.id === trilhaId);
@@ -446,11 +453,18 @@ function salvarCustom() {
   const titulo = document.getElementById('custom-titulo').value.trim();
   if (!titulo) { mostrarToast('De um nome ao exercicio!', '#dc2626'); return; }
 
+  // Mapeia o nível numérico do select em uma dificuldade textual,
+  // pra manter consistência com os exercícios do catálogo.
+  const nivelNum = parseInt(document.getElementById('custom-nivel').value, 10);
+  const mapaDificuldade = { 1: 'fácil', 2: 'médio', 3: 'difícil' };
+  const dificuldade = mapaDificuldade[nivelNum] || 'fácil';
+
   const novoEx = {
     id:    Date.now(),
     titulo,
     tipo:  document.getElementById('custom-tipo').value,
-    nivel: parseInt(document.getElementById('custom-nivel').value, 10),
+    nivel: nivelNum,
+    dificuldade,                                                       // ← novo
     fonema: document.getElementById('custom-fonema').value || '—',
     desc:  document.getElementById('custom-desc').value || 'Personalizado.',
     custom: true
@@ -460,7 +474,7 @@ function salvarCustom() {
   selecionados.push({
     trilhaId: 'custom', trilhaTitulo: 'Personalizado', trilhaEmoji: '✏️',
     trilhaTipo: novoEx.tipo, trilhaFonema: novoEx.fonema,
-    exercicio: { id: novoEx.id, palavraAlvo: novoEx.titulo, instrucao: novoEx.desc, dificuldade: 'personalizado', dicaAnimacao: '' }
+    exercicio: { id: novoEx.id, palavraAlvo: novoEx.titulo, instrucao: novoEx.desc, dificuldade, dicaAnimacao: '' }
   });
 
   fecharModalCustom();
@@ -487,3 +501,30 @@ document.getElementById('modal-custom')?.addEventListener('click', e => {
 // Inicializa
 renderExercicios();
 renderSelecionados();
+
+// ── Máscara do telefone do responsável ────────────────────────────────────────
+// Aceita apenas dígitos e formata como (XX) XXXXX-XXXX em tempo real.
+(function aplicarMascaraTelefone() {
+  const campo = document.getElementById('telefone');
+  if (!campo) return;
+
+  campo.addEventListener('input', (e) => {
+    // Mantém só os dígitos e limita a 11 (DDD + 9 dígitos)
+    let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+
+    if (v.length > 0) v = '(' + v;
+    if (v.length > 3) v = v.slice(0, 3) + ') ' + v.slice(3);
+    if (v.length > 10) v = v.slice(0, 10) + '-' + v.slice(10);
+
+    e.target.value = v;
+  });
+
+  // Bloqueia colagem de caracteres não numéricos
+  campo.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const texto = (e.clipboardData || window.clipboardData).getData('text');
+    const apenasNumeros = texto.replace(/\D/g, '').slice(0, 11);
+    campo.value = apenasNumeros;
+    campo.dispatchEvent(new Event('input'));
+  });
+})();

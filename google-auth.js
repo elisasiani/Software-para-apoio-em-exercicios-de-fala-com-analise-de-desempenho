@@ -44,18 +44,8 @@ export async function entrarComGoogle(onErro) {
     const snap = await getDoc(ref);
 
     if (snap.exists()) {
-      // Profissional já cadastrado — verifica assinatura
-      const dados = snap.data();
-      const status = dados.status || 'pendente';
-      const validade = dados.assinatura_ate?.toDate?.();
-
-      if (status !== 'ativo') {
-        window.location.href = `assinatura-vencida.html?motivo=${status}`;
-      } else if (validade && validade < new Date()) {
-        window.location.href = 'assinatura-vencida.html?motivo=vencida';
-      } else {
-        window.location.href = "dashboard.html";
-      }
+      // Profissional já cadastrado → vai direto para o dashboard
+      window.location.href = "dashboard.html";
     } else {
       // Primeira vez logando com Google → precisa completar cadastro
       window.location.href = "completar-cadastro.html";

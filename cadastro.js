@@ -149,32 +149,21 @@ form.addEventListener("submit", async (e) => {
     await updateProfile(usuario, { displayName: nome });
 
     // 3. Salva os dados extras no Firestore
-    // Novos profissionais entram com status "pendente" — só ficam ativos
-    // depois que o administrador confirma o pagamento manualmente.
     await setDoc(doc(db, "profissionais", usuario.uid), {
       nome,
       email,
       cpf,
       telefone,
       crfa,
-      criadoEm:        new Date().toISOString(),
-
-      // ── CONTROLE DE ASSINATURA ──
-      status:          "pendente",     // pendente | ativo | inativo
-      plano:           "mensal",       // mensal | anual
-      assinatura_ate:  null,           // Timestamp da validade (admin define ao ativar)
-      pagamento_observacao: ""         // campo livre para admin anotar
+      criadoEm: new Date().toISOString()
     });
 
-    // 4. Sucesso → vai para a tela de aguardando ativação
-    mostrarSucesso(
-      "Cadastro realizado! Seu acesso será liberado após a confirmação " +
-      "do pagamento. Redirecionando..."
-    );
+    // 4. Sucesso → redireciona para o login
+    mostrarSucesso("Cadastro realizado com sucesso! Redirecionando...");
 
     setTimeout(() => {
-      window.location.href = "assinatura-vencida.html?motivo=pendente";
-    }, 3500);
+      window.location.href = "login.html";
+    }, 2000);
 
   } catch (erro) {
     mostrarErro(traduzirErro(erro.code));

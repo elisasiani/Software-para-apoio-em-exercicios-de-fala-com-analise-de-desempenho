@@ -10,7 +10,6 @@
 
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-import { verificarAssinatura } from "./assinatura-guard.js";
 import {
   doc, getDoc, collection, getDocs, query, where
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
@@ -52,11 +51,6 @@ onAuthStateChanged(auth, async (usuario) => {
     window.location.href = "completar-cadastro.html";
     return;
   }
-
-  // Bloqueia se não tem assinatura ativa
-  const ok = await verificarAssinatura(usuario.uid);
-  if (!ok) return;
-
   profissionalUid = usuario.uid;
   profissionalNome = usuario.displayName || "Profissional";
   document.getElementById("topbar-nome").textContent = profissionalNome;

@@ -3,46 +3,6 @@ import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/
 import {
   doc, getDoc, collection, getDocs, query, where, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-import { verificarAssinatura, infoAssinatura } from "./assinatura-guard.js";
-
-// ── Aviso de expiração próxima ───────────────────────────────────────────────
-function mostrarAvisoExpiracao(diasRestantes, validade) {
-  const aviso = document.createElement("div");
-  aviso.id = "aviso-expiracao";
-  aviso.style.cssText = `
-    background: #fef3c7;
-    border-left: 4px solid #f59e0b;
-    color: #78350f;
-    padding: 12px 20px;
-    margin: 0 0 16px 0;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  `;
-  const validadeStr = validade ? validade.toLocaleDateString("pt-BR") : "—";
-  const textoDias = diasRestantes === 0
-    ? "hoje"
-    : (diasRestantes === 1 ? "amanhã" : `em ${diasRestantes} dias`);
-
-  aviso.innerHTML = `
-    <span>
-      ⚠️ <strong>Sua assinatura vence ${textoDias}</strong> (${validadeStr}).
-      Entre em contato para renovar e não perder o acesso.
-    </span>
-    <a href="https://wa.me/5519993300749?text=Quero%20renovar%20minha%20assinatura%20Liri"
-       target="_blank" rel="noopener"
-       style="background:#f59e0b;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-weight:600;white-space:nowrap;">
-      Renovar
-    </a>
-  `;
-
-  // Insere no topo da página principal
-  const main = document.querySelector(".page.active") || document.body;
-  main.insertBefore(aviso, main.firstChild);
-}
 
 // Navegação entre páginas
 window.mostrarPagina = function (id, btn) {
@@ -495,17 +455,6 @@ onAuthStateChanged(auth, async (usuario) => {
   if (!docSnap.exists()) {
     window.location.href = "completar-cadastro.html";
     return;
-  }
-
-  // ── CHECAGEM DE ASSINATURA ────────────────────────────────────
-  // Bloqueia acesso se status != ativo OU se assinatura venceu
-  const okAssinatura = await verificarAssinatura(usuario.uid);
-  if (!okAssinatura) return;
-
-  // Aviso amarelo no topo se faltam <= 7 dias para vencer
-  const info = await infoAssinatura(usuario.uid);
-  if (info && info.diasRestantes !== null && info.diasRestantes <= 7 && info.diasRestantes >= 0) {
-    mostrarAvisoExpiracao(info.diasRestantes, info.validade);
   }
 
   const nome = usuario.displayName || "Profissional";

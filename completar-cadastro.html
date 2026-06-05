@@ -53,21 +53,28 @@
         font-size: 0.9rem;
       "></div>
 
-      <form id="form-completar">
+      <p class="aviso-obrigatorios">
+        Os campos marcados com <span class="obrigatorio">*</span> são obrigatórios.
+      </p>
+
+      <form id="form-completar" novalidate>
 
         <div class="grupo-input">
-          <label for="cpf">CPF</label>
-          <input id="cpf" type="text" placeholder="000.000.000-00" maxlength="14" required>
+          <label for="cpf">CPF <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Ex.: 000.000.000-00</span>
+          <input id="cpf" type="text" maxlength="14" required>
         </div>
 
         <div class="grupo-input">
-          <label for="telefone">Telefone</label>
-          <input id="telefone" type="tel" placeholder="(11) 91234-5678" maxlength="15" required>
+          <label for="telefone">Telefone <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Ex.: (11) 91234-5678</span>
+          <input id="telefone" type="tel" maxlength="15" required>
         </div>
 
         <div class="grupo-input">
-          <label for="crfa">CRFa</label>
-          <input id="crfa" type="text" placeholder="Ex: 1-12345" required>
+          <label for="crfa">CRFa <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Ex.: 1-12345</span>
+          <input id="crfa" type="text" required>
         </div>
 
         <button type="submit" class="botao-entrar" id="btn-concluir">Concluir cadastro</button>
@@ -185,6 +192,17 @@
       e.preventDefault();
       mensagem.style.display = "none";
 
+      // Helpers para validação visual
+      const limparErros = () => {
+        document.querySelectorAll(".grupo-input input.campo-erro")
+          .forEach(el => el.classList.remove("campo-erro"));
+      };
+      const marcarErro = (id) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add("campo-erro");
+      };
+      limparErros();
+
       if (!usuarioAtual) {
         mostrarErro("Sessão expirada. Faça login novamente.");
         return;
@@ -193,6 +211,24 @@
       const cpf = document.getElementById("cpf").value.trim();
       const telefone = document.getElementById("telefone").value.trim();
       const crfa = document.getElementById("crfa").value.trim();
+
+      // ── Validação de obrigatórios ───────────────────────────
+      const obrigatorios = [
+        { id: "cpf",      valor: cpf,      nome: "CPF" },
+        { id: "telefone", valor: telefone, nome: "Telefone" },
+        { id: "crfa",     valor: crfa,     nome: "CRFa" },
+      ];
+      const faltando = obrigatorios.filter(c => !c.valor);
+      if (faltando.length > 0) {
+        faltando.forEach(c => marcarErro(c.id));
+        mostrarErro(
+          faltando.length === 1
+            ? `Preencha o campo: ${faltando[0].nome}.`
+            : `Preencha todos os campos obrigatórios (${faltando.length} faltando).`
+        );
+        document.getElementById(faltando[0].id)?.focus();
+        return;
+      }
 
       btnConcluir.textContent = "Salvando...";
       btnConcluir.disabled = true;
@@ -220,6 +256,15 @@
         btnConcluir.textContent = "Concluir cadastro";
         btnConcluir.disabled = false;
       }
+    });
+
+    // UX: limpa borda vermelha ao digitar
+    document.querySelectorAll(".grupo-input input").forEach(input => {
+      input.addEventListener("input", () => {
+        if (input.classList.contains("campo-erro")) {
+          input.classList.remove("campo-erro");
+        }
+      });
     });
 
     // Cancelar: faz logout e volta para o login

@@ -106,24 +106,6 @@ window._authReady = new Promise((resolve) => {
         return;
       }
 
-      // Verifica status da assinatura
-      const dados = profDoc.data();
-      const status = dados.status || 'pendente';
-      const validade = dados.assinatura_ate?.toDate?.();
-
-      if (status !== 'ativo') {
-        console.warn('[Liri] Assinatura não ativa:', status);
-        window.location.href = `assinatura-vencida.html?motivo=${status}`;
-        resolve(null);
-        return;
-      }
-      if (validade && validade < new Date()) {
-        console.warn('[Liri] Assinatura vencida em:', validade);
-        window.location.href = 'assinatura-vencida.html?motivo=vencida';
-        resolve(null);
-        return;
-      }
-
       console.log('[Liri] Profissional autenticado:', user.uid, user.email);
       resolve(user);
     } catch (e) {

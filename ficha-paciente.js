@@ -8,7 +8,6 @@
 
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-import { verificarAssinatura } from "./assinatura-guard.js";
 import {
   doc, getDoc, addDoc, updateDoc, collection,
   getDocs, query, where, Timestamp
@@ -71,10 +70,6 @@ onAuthStateChanged(auth, async (usuario) => {
     window.location.href = 'login.html';
     return;
   }
-  // Bloqueia se não tem assinatura ativa
-  const ok = await verificarAssinatura(usuario.uid);
-  if (!ok) return;
-
   profissionalUid = usuario.uid;
   await carregarPaciente();
   await carregarPrescricoes();
@@ -285,6 +280,42 @@ window.renderExercicios = function () {
   const difLabels = { 'fácil': '🟢', 'médio': '🟡', 'difícil': '🔴' };
   let html = '';
 
+  // ── Bloco dos exercícios personalizados criados nesta sessão ──
+  const personalizadosPendentes = novosSelecionados.filter(s => s.trilhaId === 'custom');
+  if (personalizadosPendentes.length > 0) {
+    html += `
+      <div style="grid-column:1/-1;background:#fff8f0;border:1px solid #ffb74d;border-radius:8px;margin-bottom:8px;padding:16px 20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span style="font-size:1.6rem;">✏️</span>
+            <div>
+              <div style="font-weight:800; color:#4a148c;">Personalizados (criados agora)</div>
+              <div style="font-size:.78rem; color:#9ca3af;">Serão salvos quando você clicar em "Salvar adições"</div>
+            </div>
+          </div>
+          <span style="background:#7B2FBE;color:#fff;border-radius:99px;padding:3px 10px;font-size:.75rem;font-weight:700;">
+            ${personalizadosPendentes.length}
+          </span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px;">
+          ${personalizadosPendentes.map(s => `
+            <div class="cartao-exercicio selecionado" style="position:relative;">
+              <span class="selo-exercicio personalizado" style="background:#7B2FBE;color:#fff;border-radius:6px;padding:2px 8px;font-size:.7rem;font-weight:700;">Personalizado</span>
+              <div class="exercicio-titulo">${s.exercicio.palavraAlvo}</div>
+              <div class="exercicio-descricao">${s.exercicio.instrucao}</div>
+              <div class="exercicio-meta">
+                <span class="exercicio-fonema">${difLabels[s.exercicio.dificuldade] || ''} ${s.exercicio.dificuldade}</span>
+              </div>
+              <button type="button" onclick="removerCustomPendente('${s.exercicio.id}')"
+                style="position:absolute;top:6px;right:6px;background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:4px 8px;font-size:.7rem;font-weight:700;cursor:pointer;">
+                Remover
+              </button>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  }
+
   trilhasFiltradas.forEach(trilha => {
     const totalSel = novosSelecionados.filter(s => s.trilhaId === trilha.id).length;
     const expanded = trilhaExpandida === trilha.id;
@@ -468,3 +499,207 @@ async function carregarAudios() {
     </div>`;
   }
 }
+
+// =============================================================
+// EDIÇÃO DE DADOS DO PACIENTE
+// =============================================================
+const modalEdicao = document.getElementById('modal-editar-paciente');
+
+function abrirModalEdicao() {
+  if (!pacienteData) return;
+
+  // Preenche o formulário com os dados atuais
+  document.getElementById('edit-nome').value = pacienteData.nome || '';
+  document.getElementById('edit-sexo').value = pacienteData.sexo || '';
+  document.getElementById('edit-responsavel').value = pacienteData.responsavel || '';
+  document.getElementById('edit-telefone').value = pacienteData.telefone || '';
+  document.getElementById('edit-observacoes').value = pacienteData.observacoes || '';
+
+  // Converte Timestamp/data para formato YYYY-MM-DD do input[type=date]
+  const dataNasc = pacienteData.data_nascimento;
+  let dataStr = '';
+  if (dataNasc) {
+    const d = dataNasc.toDate ? dataNasc.toDate() : new Date(dataNasc);
+    if (!isNaN(d.getTime())) {
+      dataStr = d.toISOString().split('T')[0];
+    }
+  }
+  document.getElementById('edit-nascimento').value = dataStr;
+
+  // Esconde mensagem antiga
+  document.getElementById('msg-edicao').style.display = 'none';
+
+  // Mostra o modal
+  modalEdicao.style.display = 'flex';
+}
+
+function fecharModalEdicao() {
+  modalEdicao.style.display = 'none';
+}
+
+// Conecta botões
+document.getElementById('btn-editar-paciente')?.addEventListener('click', abrirModalEdicao);
+document.getElementById('btn-fechar-edicao')?.addEventListener('click', fecharModalEdicao);
+document.getElementById('btn-cancelar-edicao')?.addEventListener('click', fecharModalEdicao);
+
+// Fecha quando clica fora do conteúdo
+modalEdicao?.addEventListener('click', (e) => {
+  if (e.target === modalEdicao) fecharModalEdicao();
+});
+
+// Máscara de telefone no input de edição
+const inputTelEdicao = document.getElementById('edit-telefone');
+inputTelEdicao?.addEventListener('input', (e) => {
+  let v = e.target.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 0) v = '(' + v;
+  if (v.length > 3) v = v.slice(0, 3) + ') ' + v.slice(3);
+  if (v.length > 10) v = v.slice(0, 10) + '-' + v.slice(10);
+  e.target.value = v;
+});
+
+// Submeter formulário
+document.getElementById('form-editar-paciente')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const msg = document.getElementById('msg-edicao');
+  const btnSalvar = document.getElementById('btn-salvar-edicao');
+
+  const nome        = document.getElementById('edit-nome').value.trim();
+  const sexo        = document.getElementById('edit-sexo').value;
+  const nascStr     = document.getElementById('edit-nascimento').value;
+  const responsavel = document.getElementById('edit-responsavel').value.trim();
+  const telefone    = document.getElementById('edit-telefone').value.trim();
+  const observacoes = document.getElementById('edit-observacoes').value.trim();
+
+  if (!nome) {
+    msg.style.display = 'block';
+    msg.style.background = '#fee2e2';
+    msg.style.color = '#dc2626';
+    msg.textContent = 'O nome é obrigatório.';
+    return;
+  }
+
+  btnSalvar.disabled = true;
+  btnSalvar.textContent = 'Salvando…';
+
+  try {
+    // Monta o objeto de atualização
+    const atualizacao = {
+      nome,
+      sexo:        sexo || null,
+      responsavel: responsavel || null,
+      telefone:    telefone || null,
+      observacoes: observacoes || null,
+    };
+
+    // Converte a data pra Timestamp (ou null)
+    if (nascStr) {
+      atualizacao.data_nascimento = Timestamp.fromDate(new Date(nascStr + 'T00:00:00'));
+    } else {
+      atualizacao.data_nascimento = null;
+    }
+
+    await updateDoc(doc(db, 'pacientes', pacienteId), atualizacao);
+
+    // Atualiza estado local e recarrega visualmente
+    Object.assign(pacienteData, atualizacao);
+
+    msg.style.display = 'block';
+    msg.style.background = '#dcfce7';
+    msg.style.color = '#16a34a';
+    msg.textContent = 'Dados atualizados com sucesso!';
+
+    // Fecha o modal e recarrega a ficha
+    setTimeout(async () => {
+      fecharModalEdicao();
+      await carregarPaciente();
+    }, 800);
+
+  } catch (e) {
+    console.error('Erro ao salvar edição:', e);
+    msg.style.display = 'block';
+    msg.style.background = '#fee2e2';
+    msg.style.color = '#dc2626';
+    msg.textContent = 'Erro ao salvar. Tente novamente.';
+  } finally {
+    btnSalvar.disabled = false;
+    btnSalvar.textContent = 'Salvar alterações';
+  }
+});
+
+// =============================================================
+// EXERCÍCIO PERSONALIZADO — modal de criação rápida na ficha
+// O exercício é adicionado direto a `novosSelecionados`, então
+// já fica "pré-selecionado" e basta clicar em "Salvar adições".
+// =============================================================
+const modalCustom = document.getElementById('modal-custom-ficha');
+
+window.abrirModalCustom = function () {
+  // Limpa campos
+  document.getElementById('custom-titulo-ficha').value = '';
+  document.getElementById('custom-tipo-ficha').value = 'fonema';
+  document.getElementById('custom-nivel-ficha').value = '1';
+  document.getElementById('custom-fonema-ficha').value = '';
+  document.getElementById('custom-desc-ficha').value = '';
+  modalCustom.style.display = 'flex';
+};
+
+window.fecharModalCustom = function () {
+  modalCustom.style.display = 'none';
+};
+
+// Fecha clicando no fundo
+modalCustom?.addEventListener('click', (e) => {
+  if (e.target === modalCustom) window.fecharModalCustom();
+});
+
+window.salvarCustom = function () {
+  const titulo = document.getElementById('custom-titulo-ficha').value.trim();
+  if (!titulo) {
+    mostrarToast('Informe a palavra ou frase do exercício.', '#dc2626');
+    return;
+  }
+
+  const nivelNum = parseInt(document.getElementById('custom-nivel-ficha').value, 10);
+  const mapaDif = { 1: 'fácil', 2: 'médio', 3: 'difícil' };
+  const dificuldade = mapaDif[nivelNum] || 'fácil';
+
+  const tipo   = document.getElementById('custom-tipo-ficha').value;
+  const fonema = document.getElementById('custom-fonema-ficha').value.trim() || '—';
+  const desc   = document.getElementById('custom-desc-ficha').value.trim()
+                  || `Pratique: ${titulo}`;
+
+  // ID único pra esse exercício custom
+  const exId = 'custom_' + Date.now();
+
+  // Adiciona direto na lista de selecionados — vai ser salvo junto
+  // quando a fono clicar em "Salvar adições"
+  novosSelecionados.push({
+    trilhaId:    'custom',
+    trilhaTitulo:'Personalizado',
+    trilhaTipo:  tipo,
+    trilhaFonema: fonema,
+    exercicio: {
+      id:           exId,
+      palavraAlvo:  titulo,
+      instrucao:    desc,
+      dicaAnimacao: '',
+      dificuldade
+    }
+  });
+
+  // Atualiza visualmente o contador e mensagem
+  document.getElementById('qtd-adicionando').textContent = novosSelecionados.length;
+  window.renderExercicios();
+  mostrarToast(`"${titulo}" adicionado. Clique em "Salvar adições" para confirmar.`);
+
+  window.fecharModalCustom();
+};
+
+window.removerCustomPendente = function (exId) {
+  const idx = novosSelecionados.findIndex(s =>
+    s.trilhaId === 'custom' && s.exercicio.id === exId);
+  if (idx !== -1) {
+    novosSelecionados.splice(idx, 1);
+    window.renderExercicios();
+  }
+};

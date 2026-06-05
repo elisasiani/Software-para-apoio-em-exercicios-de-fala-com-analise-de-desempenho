@@ -40,32 +40,18 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/profissionais/$(uid));
     }
 
-    // Retorna true se o profissional logado tem status "ativo"
-    // E a assinatura ainda não venceu.
-    function profissionalAtivo() {
-      let prof = get(/databases/$(database)/documents/profissionais/$(request.auth.uid)).data;
-      return logado()
-          && prof.status == 'ativo'
-          && (prof.assinatura_ate == null
-              || prof.assinatura_ate > request.time);
-    }
-
     // ---------- PROFISSIONAIS ----------
     match /profissionais/{uid} {
-      // O profissional pode SEMPRE ler/escrever seu próprio doc
-      // (mesmo com assinatura vencida — pra conseguir ver a tela de bloqueio)
       allow read, write: if ehProprio(uid);
       allow create: if logado() && request.auth.uid == uid;
     }
 
     // ---------- PACIENTES ----------
     match /pacientes/{uid} {
-      // Leitura: paciente lê o próprio, OU profissional ativo dono do paciente
       allow get: if ehProprio(uid) ||
-                    (profissionalAtivo() && resource.data.profissional_id == request.auth.uid);
+                    (ehProfissional() && resource.data.profissional_id == request.auth.uid);
 
-      // Listagem: só profissionais com assinatura ATIVA podem listar
-      allow list: if profissionalAtivo();
+      allow list: if ehProfissional();
 
       // Criação: aceita dois cenários
       //   A) Fono criando paciente dela (fluxo via instância secundária)
@@ -82,13 +68,13 @@ service cloud.firestore {
                       ehProprio(uid)
                     );
 
-      allow update: if (profissionalAtivo()
+      allow update: if (ehProfissional()
                           && resource.data.profissional_id == request.auth.uid)
                     || (ehProprio(uid)
                           && request.resource.data.profissional_id == resource.data.profissional_id
                           && request.resource.data.tipo == resource.data.tipo);
 
-      allow delete: if profissionalAtivo() && resource.data.profissional_id == request.auth.uid;
+      allow delete: if ehProfissional() && resource.data.profissional_id == request.auth.uid;
     }
 
     // ---------- PRESCRICOES ----------
@@ -100,17 +86,18 @@ service cloud.firestore {
 
       allow list: if logado();
 
-      // Criação só por profissional ATIVO (ou paciente recém-criado, p/ fluxo antigo)
+      // Aceita criação tanto pela fono (caso normal agora) quanto
+      // pelo próprio paciente (compatibilidade).
       allow create: if logado()
                     && profissionalExiste(request.resource.data.profissional_id)
                     && (
-                      (profissionalAtivo()
+                      (ehProfissional()
                         && request.resource.data.profissional_id == request.auth.uid)
                       ||
                       (request.auth.uid == request.resource.data.paciente_id)
                     );
 
-      allow update, delete: if profissionalAtivo() &&
+      allow update, delete: if ehProfissional() &&
                                resource.data.profissional_id == request.auth.uid;
     }
 
