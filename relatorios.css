@@ -1,0 +1,151 @@
+/* ───────────────────────────────────────────── */
+/* RELATÓRIOS — estilos adicionais                */
+/* (complementa o styleProfissional.css)          */
+/* ───────────────────────────────────────────── */
+
+/* Barra de ações do cabeçalho */
+.acoes-exportar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.acoes-exportar .btn-primary,
+.acoes-exportar .btn-outline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Filtros */
+.filtros-bar {
+  background: var(--white, #fff);
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filtro-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+  flex: 1;
+}
+
+.filtro-grupo label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--gray-600, #4b5563);
+}
+
+.filtro-grupo select {
+  padding: 9px 12px;
+  border: 1px solid var(--gray-200, #e5e7eb);
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: .88rem;
+  color: var(--gray-900, #111827);
+  background: var(--white, #fff);
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.filtro-grupo select:focus {
+  outline: none;
+  border-color: var(--purple, #7c3aed);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+#btn-aplicar {
+  padding: 9px 20px;
+  align-self: flex-end;
+  height: fit-content;
+}
+
+/* Wrapper dos gráficos para limitar altura */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+/* Grid com dois gráficos lado a lado */
+.grafico-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+@media (max-width: 900px) {
+  .grafico-grid {
+    grid-template-columns: 1fr;
+  }
+  .filtros-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filtro-grupo {
+    min-width: auto;
+  }
+}
+
+/* Badge da taxa de acerto na tabela */
+.taxa-acerto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.taxa-acerto.alta {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.taxa-acerto.media {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.taxa-acerto.baixa {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Botão "Ver detalhes" da tabela */
+.btn-ver-paciente {
+  background: none;
+  border: 1px solid var(--gray-200, #e5e7eb);
+  color: var(--purple, #7c3aed);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+}
+
+.btn-ver-paciente:hover {
+  background: var(--purple-bg, #f5f3ff);
+  border-color: var(--purple, #7c3aed);
+}
+
+/* Loading dos gráficos */
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray-400, #9ca3af);
+  font-size: .9rem;
+}

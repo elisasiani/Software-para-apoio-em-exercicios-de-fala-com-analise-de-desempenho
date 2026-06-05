@@ -1,0 +1,867 @@
+:root {
+    --roxo: #7a08af;
+    --roxo-escuro: #510077da;
+    --roxo-medio: #7c3aed;
+    --roxo-claro: #a855f7;
+    --roxo-bg: #f6f3fa;
+    --roxo-suave: #f3e8ff;
+    --roxo-borda: #e9d5ff;
+
+    --branco: #ffffff;
+    --cinza-50: #f9fafb;
+    --cinza-100: #f3f4f6;
+    --cinza-200: #e5e7eb;
+    --cinza-400: #9ca3af;
+    --cinza-600: #4b5563;
+    --cinza-900: #111827;
+
+    --verde-bg: #dcfce7;
+    --verde-txt: #166534;
+    --vermelho-bg: #fee2e2;
+    --vermelho-txt: #dc2626;
+
+    --sombra-leve: 0 2px 8px rgba(140, 63, 175, .08);
+    --sombra-media: 0 6px 24px rgba(140, 63, 175, .13);
+    --sombra-forte: 0 15px 40px rgba(140, 63, 175, .18);
+
+    --raio-sm: 8px;
+    --raio-md: 12px;
+    --raio-lg: 20px;
+    --transicao: .22s ease;
+}
+
+body {
+    margin: 0;
+    background: var(--roxo-bg);
+    color: var(--cinza-600);
+    font-family: 'Segoe UI', sans-serif !important;
+    background-color: #f6f3fa !important;
+    -webkit-font-smoothing: antialiased;
+}
+
+
+h1,
+h2,
+h3,
+p,
+a {
+    font-family: 'Segoe UI', sans-serif !important;
+}
+
+header {
+    position: sticky;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 68px;
+    height: 70px;
+    background: #fefcffee;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 1px 6px rgba(177, 124, 190, .13);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    letter-spacing: -.5px;
+    color: var(--roxo);
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+nav a {
+    padding: 8px 14px;
+    text-decoration: none;
+    color: var(--cinza-600);
+    font-size: .92rem;
+    font-weight: 500;
+    border-radius: var(--raio-sm);
+    transition: all var(--transicao);
+}
+
+nav a:hover {
+    color: var(--roxo-medio);
+    background: var(--roxo-suave);
+}
+
+nav a.btn {
+    background: linear-gradient(135deg, var(--roxo));
+    color: var(--branco);
+    font-weight: 600;
+    box-shadow: 0 3px 10px rgba(124, 58, 237, .30);
+}
+
+nav a.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(124, 58, 237, .40);
+    background: linear-gradient(135deg, var(--roxo-escuro));
+    color: var(--branco);
+}
+
+.destaque {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px 72px;
+    gap: 48px;
+    background-color: #bc0ed30c;
+    min-height: 80vh;
+}
+
+.texto-destaque {
+    max-width: 530px;
+}
+
+.destaque h1 {
+    font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+    ;
+    color: rgba(78, 1, 78, 0.774);
+}
+
+.destaque h1 em {
+    color: var(--roxo-escuro);
+}
+
+.destaque p {
+    font-size: .99rem;
+    color: var(--cinza-900);
+    line-height: 1.75;
+}
+
+.destaque img {
+    width: 560px;
+    max-width: 100%;
+    border-radius: var(--raio-md);
+    background: #c8c3cacc;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    padding: 1px;
+}
+
+.secao-recursos {
+    padding: 20px 60px;
+    text-align: center;
+}
+
+.secao-recursos h2 {
+    color: var(--roxo-escuro);
+}
+
+.lista-recursos {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.item-recurso {
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    width: 240px;
+    text-align: left;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-top: 4px solid var(--roxo-escuro)
+}
+
+.item-recurso h3 {
+    color: var(--roxo-escuro);
+}
+
+
+/* ── CARROSSEL AJUSTADO ───────────────── */
+.secao-carrossel {
+    width: 100%;
+    padding: 60px 0;
+    overflow: hidden;
+}
+
+.container-carrossel {
+    position: relative;
+    width: 90%;
+    /* Ajustado para deixar espaço para as setas */
+    max-width: 900px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.trilho-carrossel {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    /* Correção aqui */
+    width: 100%;
+}
+
+.slide {
+    min-width: 100%;
+    box-sizing: border-box;
+    padding: 20px;
+}
+
+.conteudo-slide {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: var(--sombra-media);
+    border: 1px solid var(--roxo-borda);
+}
+
+/* Estilo dos botões corrigido */
+.botao-carrossel {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--roxo);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 24px;
+    z-index: 10;
+    transition: var(--transicao);
+}
+
+.botao-carrossel:hover {
+    background: var(--roxo-escuro);
+}
+
+.anterior {
+    left: -60px;
+}
+
+/* Posiciona fora do card se quiser */
+.proximo {
+    right: -60px;
+}
+
+.indicadores {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.indicador {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: none;
+    background: var(--cinza-200);
+    cursor: pointer;
+}
+
+.indicador.ativo {
+    background: var(--roxo);
+}
+
+/* Indicadores centralizados */
+.indicadores {
+    margin-top: 35px;
+}
+
+.como-funciona {
+    padding: 10px 10px;
+    text-align: center;
+    background-color: #e547fa17;
+}
+
+.como-funciona h2 {
+    color: #8c3faf;
+}
+
+.etapas {
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.etapa {
+    max-width: 250px;
+}
+
+.circulo {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    margin: 0 auto 15px;
+}
+
+.chamada {
+    text-align: center;
+    padding: 80px 20px;
+}
+
+.chamada h2 {
+    color: var(--roxo-escuro);
+    margin-bottom: 15px;
+}
+
+.chamada p {
+    max-width: 600px;
+    margin: 0 auto 30px;
+    color: var(--cinza-600);
+    line-height: 1.6;
+}
+
+.acoes-chamada {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.botao {
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #852bdad8;
+    color: white;
+    transition: var(--transicao);
+}
+
+.botao-primario {
+    background: linear-gradient(135deg, var(--roxo-medio));
+    color: var(--branco);
+}
+
+.botao-primario:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--sombra-media);
+}
+
+.botao-outline {
+    background: transparent;
+    border: 2px solid var(--roxo);
+    color: var(--roxo);
+}
+
+.botao-outline:hover {
+    background: var(--roxo-suave);
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: #eee;
+    margin: 20px 0;
+}
+/*Rodapé*/
+
+.rodape {
+    background: var(--roxo-escuro);
+    color: rgba(255, 255, 255, .7);
+    padding: 56px 0 0;
+}
+
+.rodape-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 68px;
+}
+
+.rodape-grade {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 36px;
+    padding-bottom: 40px;
+}
+
+.rodape-titulo {
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgb(255, 255, 255);
+    margin-bottom: 16px;
+}
+
+.rodape-lista {
+    list-style: none;
+    padding: 0;
+}
+
+.rodape-lista li {
+    margin-bottom: 9px;
+}
+
+.rodape-lista a {
+    color: rgba(255, 255, 255, .65);
+    text-decoration: none;
+    font-size: .88rem;
+    transition: color var(--transicao);
+}
+
+.rodape-lista a:hover {
+    color: var(--branco);
+}
+
+.rodape-contato p {
+    font-style: normal;
+    font-size: .88rem;
+    margin-bottom: 8px;
+    color: rgba(255, 255, 255, 0.788);
+}
+
+.rodape-inferior {
+    border-top: 1px solid rgba(255, 255, 255, .08);
+    padding: 22px 68px;
+    text-align: center;
+    font-size: .8rem;
+    color: rgba(255, 255, 255, .3);
+}
+
+/* ── Quem Somos─────────────────────────────── */
+.destaque-quem-somos {
+  padding: 80px 68px;
+  background: linear-gradient(135deg, var(--roxo-suave) 0%, var(--roxo-bg) 70%);
+  text-align: center;
+}
+
+.destaque-quem-somos h2 {
+  font-size: clamp(1.5rem,2vw,2rem);
+  font-weight: 700; 
+  color: var(--cinza-900); 
+  margin-bottom: 20px;
+}
+
+.destaque-quem-somos h2 em { 
+  color: var(--roxo); 
+  font-style: normal; 
+}
+
+.destaque-quem-somos p { 
+  color: var(--cinza-600); 
+  max-width: 520px; 
+  margin: 0 auto; 
+  font-size: .99rem; 
+}
+
+/* ──Quem somos -  História ─────────────────────────────── */
+.secao-historia {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr;
+  gap: 60px;
+  align-items: center;
+  padding: 80px 68px;
+  background: var(--branco);
+}
+
+.secao-historia img {
+  width: 100%; 
+  border-radius: var(--raio-lg);
+  box-shadow: 0 5px 40px -8px ;
+}
+
+.secao-historia div h2 {
+  font-size: 1.5rem; 
+  font-weight: 700;
+  color: var(--cinza-900); 
+  margin-bottom: 16px;
+}
+
+.secao-historia div p {
+  color: var(--cinza-900); 
+  line-height: 1.75;
+  margin-bottom: 14px; 
+  font-size: .93rem;
+}
+
+/* ── Quem somos - Valores ─────────────────────────────── */
+.secao-valores {
+  padding: 60px 68px;
+  text-align: center;
+}
+
+/* ── Quem somos - Equipe ─────────────────────────────── */
+.secao-equipe {
+  padding: 60px 68px;
+  text-align: center;
+}
+
+.grade-equipe {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 22px;
+  margin-top: 40px;
+}
+
+.grade-equipe > div {
+  text-align: center;
+  background: var(--branco);
+  border-radius: var(--raio-lg);
+  padding: 26px 16px;
+  border: 1px solid var(--roxo-borda);
+  box-shadow: var(--sombra-leve);
+  transition: transform var(--transicao), box-shadow var(--transicao);
+}
+
+.grade-equipe > div:hover { 
+  transform: translateY(-5px); 
+  box-shadow: var(--sombra-media); 
+}
+
+/* Avatar com imagem */
+.avatar {
+  width: 90px; 
+  height: 90px;
+  border-radius: 50%;
+  margin: 0 auto 12px;
+  overflow: hidden; /* faz a imagem virar círculo */
+  position: relative;
+}
+
+/* Imagem dentro do avatar */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Hover com efeito suave */
+.avatar::after {
+  content: "LinkedIn";
+  position: absolute;
+  inset: 0;
+  background: rgba(124, 58, 237, 0.281);
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  border-radius: 50%;
+  transition: var(--transicao);
+}
+
+/* Mostra no hover */
+.grade-equipe > div:hover .avatar::after {
+  opacity: 1;
+}
+
+.grade-equipe p {
+  font-size: .90rem; 
+  font-weight: 600; 
+  color: var(--cinza-900);
+}
+
+/* Remove o sublinhado de todos os links */
+a {
+    text-decoration: none;
+}
+
+/* ── Seção de Login ─────────────────────────────── */
+.secao-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px;
+}
+
+.cartao-login {
+    background: #fff;
+    padding: 35px;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(140, 63, 175, 0.15);
+    text-align: center;
+    border-top: 1px solid #8c3faf;
+}
+
+.cartao-login h2 {
+    color: var(--roxo);
+    margin-bottom: 5px;
+}
+
+/* Subtítulo */
+.subtitulo {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+/* Inputs */
+.grupo-input {
+    text-align: left;
+    margin-bottom: 18px;
+}
+
+.grupo-input label {
+    font-size: 13px;
+    color: #444;
+}
+
+.grupo-input input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    outline: none;
+    transition: 0.3s;
+}
+
+.grupo-input input:focus {
+    border-color: #8c3faf;
+    box-shadow: 0 0 5px rgba(140, 63, 175, 0.3);
+}
+
+/* Botão */
+.botao-entrar {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: var(--roxo-escuro);
+    color: white;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.botao-entrar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(140, 63, 175, 0.4);
+}
+
+/* Links abaixo do formulário */
+.links-rodape {
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.links-rodape a {
+    text-decoration: none;
+    color: #8c3faf;
+    font-weight: 500;
+}
+
+.links-rodape a:hover {
+    text-decoration: underline;
+}
+
+/* ── Seção de Cadastro ─────────────────────────────── */
+.secao-cadastro {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px;
+}
+
+.cartao-cadastro {
+    background: #fff;
+    padding: 35px;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(140, 63, 180, 0.15);
+    text-align: center;
+    border-top: 1px solid #8c3faf;
+}
+
+.cartao-cadastro h2 {
+    color:var(--roxo)
+}
+
+/* ─────────────────────────────────────────────────── */
+/* LOGIN COM GOOGLE — versão moderna e elegante        */
+/* Substitui o conteúdo de style-google-adicao.css     */
+/* ou adicione ao final do style.css                   */
+/* ─────────────────────────────────────────────────── */
+
+/* Divisor "OU" com fade nas pontas */
+.divisor-ou {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.divisor-ou::before,
+.divisor-ou::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+}
+
+/* ===== BOTÃO GOOGLE — MODERNO E ELEGANTE ===== */
+.botao-google {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #1f2937;
+  font-weight: 500;
+  font-size: 0.95rem;
+  font-family: 'Segoe UI', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Faixa de brilho sutil que passa no hover */
+.botao-google::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(124, 58, 237, 0.05),
+    transparent
+  );
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.botao-google:hover::before {
+  left: 100%;
+}
+
+/* Estado hover: eleva e intensifica sombra */
+.botao-google:hover {
+  border-color: #d1d5db;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.08),
+    0 3px 6px rgba(122, 8, 175, 0.06);
+  transform: translateY(-2px);
+  color: #111827;
+}
+
+/* Estado ativo: feedback de clique */
+.botao-google:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: all 0.1s ease;
+}
+
+/* Foco acessível (navegação por teclado) */
+.botao-google:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(122, 8, 175, 0.15),
+    0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Estado desabilitado durante o carregamento */
+.botao-google:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.botao-google:disabled::before {
+  display: none;
+}
+
+/* Ícone do Google */
+.botao-google svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+.botao-google:hover:not(:disabled) svg {
+  transform: scale(1.08);
+}
+
+/* ── Responsivo ─────────────────────────────── */
+@media (max-width: 960px) {
+  header { padding: 0 24px; }
+
+  .destaque { flex-direction: column; padding: 60px 24px; min-height: auto; text-align: center; }
+  .acoes-destaque { justify-content: center; }
+  .destaque img { width: 100%; max-width: 420px; }
+
+  .secao, .como-funciona, .chamada { padding: 60px 24px; }
+
+  .secao-historia { grid-template-columns: 1fr; padding: 60px 24px; }
+  .destaque-quem-somos { padding: 60px 24px; }
+
+  .rodape-container { padding: 0 24px; }
+  .rodape-inferior { padding: 22px 24px; }
+}
+
+@media (max-width: 600px) {
+  nav a:not(.botao) { display: none; }
+  .rodape-grade { grid-template-columns: 1fr; text-align: center; }
+}
+/* ────────────────────────────────────────────────────────────
+   Cadastro — campos obrigatórios e dicas
+   ──────────────────────────────────────────────────────────── */
+.aviso-obrigatorios {
+    background: #fef2f2;
+    border-left: 3px solid #dc2626;
+    color: #7f1d1d;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.obrigatorio {
+    color: #dc2626;
+    font-weight: 700;
+    margin-left: 2px;
+}
+
+.grupo-input .dica-campo {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+    margin-bottom: 4px;
+    font-style: italic;
+}
+
+/* Realce visual quando o usuário tenta submeter sem preencher */
+.grupo-input input.campo-erro {
+    border-color: #dc2626;
+    background-color: #fef2f2;
+}
+
+.grupo-input input.campo-erro:focus {
+    box-shadow: 0 0 5px rgba(220, 38, 38, 0.3);
+}

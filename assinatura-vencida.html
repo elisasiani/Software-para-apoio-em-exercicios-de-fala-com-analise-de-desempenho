@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assinatura - Liri</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .bloqueio-container {
+      max-width: 520px;
+      margin: 80px auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 32px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    .bloqueio-icone {
+      font-size: 72px;
+      margin-bottom: 12px;
+    }
+    .bloqueio-titulo {
+      font-size: 1.5rem;
+      color: #4A148C;
+      margin: 0 0 12px 0;
+    }
+    .bloqueio-msg {
+      color: #555;
+      font-size: 0.96rem;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .bloqueio-card {
+      background: #f8f0ff;
+      border-left: 4px solid #7B2FBE;
+      border-radius: 8px;
+      padding: 16px 20px;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+    .bloqueio-card strong {
+      color: #4A148C;
+    }
+    .bloqueio-card p {
+      margin: 6px 0;
+      font-size: 0.92rem;
+      color: #555;
+    }
+    .bloqueio-acoes {
+      display: flex;
+      gap: 12px;
+      flex-direction: column;
+    }
+    .botao-whatsapp {
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .botao-whatsapp:hover { background: #1ebd5d; }
+    .botao-secundario {
+      background: white;
+      color: #7B2FBE;
+      border: 2px solid #7B2FBE;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .botao-secundario:hover { background: #f8f0ff; }
+    .info-conta {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <img src="/img/girafa.png" alt="Girafa Liri"
+        style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
+      Liri
+    </div>
+  </header>
+
+  <div class="bloqueio-container">
+    <div class="bloqueio-icone" id="bloqueio-icone">🔒</div>
+    <h1 class="bloqueio-titulo" id="bloqueio-titulo">Acesso bloqueado</h1>
+    <p class="bloqueio-msg" id="bloqueio-msg">Carregando informações...</p>
+
+    <div class="bloqueio-card">
+      <p><strong>Como ativar/renovar sua assinatura:</strong></p>
+      <p>1. Entre em contato pelo WhatsApp abaixo</p>
+      <p>2. Envie o comprovante de pagamento</p>
+      <p>3. Seu acesso será liberado em até 24 horas</p>
+    </div>
+
+    <div class="bloqueio-acoes">
+      <a href="https://wa.me/5519993300749?text=Olá!%20Quero%20renovar%20minha%20assinatura%20Liri."
+         class="botao-whatsapp" target="_blank" rel="noopener">
+        💬 Falar pelo WhatsApp
+      </a>
+      <a href="#" id="btn-sair" class="botao-secundario">Sair</a>
+    </div>
+
+    <p class="info-conta" id="info-conta"></p>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    const params = new URLSearchParams(window.location.search);
+    const motivo = params.get("motivo") || "vencida";
+
+    const conteudoPorMotivo = {
+      pendente: {
+        icone: "⏳",
+        titulo: "Aguardando ativação",
+        msg: "Seu cadastro foi recebido! Para começar a usar o sistema, " +
+             "envie o comprovante de pagamento pelo WhatsApp. Seu acesso " +
+             "será liberado em até 24 horas após a confirmação."
+      },
+      vencida: {
+        icone: "⚠️",
+        titulo: "Sua assinatura venceu",
+        msg: "Seu acesso foi suspenso porque a assinatura mensal expirou. " +
+             "Para retomar o uso do sistema e voltar a atender seus pacientes, " +
+             "renove sua assinatura entrando em contato com a gente."
+      },
+      inativo: {
+        icone: "🚫",
+        titulo: "Conta inativa",
+        msg: "Sua conta está temporariamente inativa. Entre em contato " +
+             "com nossa equipe para regularizar e voltar a acessar o sistema."
+      }
+    };
+
+    const c = conteudoPorMotivo[motivo] || conteudoPorMotivo.vencida;
+    document.getElementById("bloqueio-icone").textContent  = c.icone;
+    document.getElementById("bloqueio-titulo").textContent = c.titulo;
+    document.getElementById("bloqueio-msg").textContent    = c.msg;
+
+    // Mostra info da conta logada
+    onAuthStateChanged(auth, async (usuario) => {
+      if (!usuario) {
+        // Sem login → não deveria estar aqui
+        window.location.href = "login.html";
+        return;
+      }
+
+      try {
+        const docSnap = await getDoc(doc(db, "profissionais", usuario.uid));
+        if (docSnap.exists()) {
+          const d = docSnap.data();
+          const validade = d.assinatura_ate?.toDate?.();
+          const validadeStr = validade
+            ? validade.toLocaleDateString("pt-BR")
+            : "—";
+          document.getElementById("info-conta").innerHTML =
+            `Conta: <strong>${d.email || usuario.email}</strong>` +
+            (motivo === "vencida"
+              ? `<br>Validade: ${validadeStr}`
+              : "");
+        }
+      } catch (_) {}
+    });
+
+    document.getElementById("btn-sair").addEventListener("click", async (e) => {
+      e.preventDefault();
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
+  </script>
+</body>
+</html>

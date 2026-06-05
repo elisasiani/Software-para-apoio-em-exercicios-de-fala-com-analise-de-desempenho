@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro - Liri</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <div class="logo">
+      <img src="/img/girafa.png" alt="Girafa Liri"
+        style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
+      Liri
+    </div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="QuemSomos.html">Quem Somos</a>
+      <a href="login.html" class="btn">Área do Profissional</a>
+    </nav>
+  </header>
+
+  <section class="secao-cadastro">
+    <div class="cartao-cadastro">
+
+      <h2>Área do Profissional</h2>
+      <p class="subtitulo">Crie sua conta</p>
+
+      <!-- Mensagem de feedback (erro ou sucesso) -->
+      <div id="mensagem" style="
+        display: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+      "></div>
+
+      <!-- Botão Google primeiro (atalho rápido) -->
+      <button type="button" class="botao-google" id="btn-google">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+        </svg>
+        Cadastrar com Google
+      </button>
+
+      <div class="divisor-ou">ou cadastre-se com e-mail</div>
+
+      <p class="aviso-obrigatorios">
+        Os campos marcados com <span class="obrigatorio">*</span> são obrigatórios.
+      </p>
+
+      <form id="form-cadastro" novalidate>
+
+        <div class="grupo-input">
+          <label for="nome">Nome completo <span class="obrigatorio">*</span></label>
+          <input id="nome" type="text" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="email">E-mail <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Ex.: seu@email.com</span>
+          <input id="email" type="email" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="cpf">CPF <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Ex.: 000.000.000-00</span>
+          <input id="cpf" type="text" maxlength="14" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="telefone">Telefone <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Ex.: (11) 91234-5678</span>
+          <input id="telefone" type="tel" maxlength="15" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="crfa">CRFa <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Ex.: 1-12345</span>
+          <input id="crfa" type="text" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="senha">Senha <span class="obrigatorio">*</span></label>
+          <span class="dica-campo">Mínimo 6 caracteres</span>
+          <input id="senha" type="password" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="confirmar-senha">Confirmar Senha <span class="obrigatorio">*</span></label>
+          <input id="confirmar-senha" type="password" required>
+        </div>
+
+        <button type="submit" class="botao-entrar" id="btn-cadastrar">Cadastrar</button>
+
+      </form>
+
+      <div class="links-rodape">
+        Já tem uma conta? <a href="login.html">Faça login</a>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="rodape">
+    <div class="rodape-container">
+      <div class="rodape-grade">
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Navegação</h4>
+          <ul class="rodape-lista">
+            <li><a href="index.html">Início</a></li>
+            <li><a href="QuemSomos.html">Quem Somos</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Acesso</h4>
+          <ul class="rodape-lista">
+            <li><a href="cadastro.html">Área do Profissional</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Contato</h4>
+          <address class="rodape-contato">
+            <p>contato@liri.com.br</p>
+            <p>(11) 3456-7890</p>
+            <p>São Paulo, SP</p>
+          </address>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="rodape-inferior">
+      <p>&copy; 2025 Liri. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script type="module" src="cadastro.js"></script>
+</body>
+
+</html>

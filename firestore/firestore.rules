@@ -1,0 +1,133 @@
+// =============================================================
+// Firestore Security Rules — Liri (v5)
+// Projeto: app-fonoaudiologia-gamificado
+// =============================================================
+// Como aplicar:
+// 1. Firebase Console > Firestore Database > Aba "Regras"
+// 2. APAGUE tudo que estiver lá e cole este conteúdo
+// 3. Clique em "Publicar"
+// =============================================================
+//
+// Mudanças v4 → v5:
+//   Como o cadastro de paciente agora roda em uma instância
+//   secundária do Firebase, a fono permanece logada e é ELA
+//   quem grava o doc do paciente. As regras agora permitem
+//   esse caso (fono criando paciente dela), mantendo também
+//   o caso antigo (paciente criando seu próprio doc) por
+//   compatibilidade e robustez.
+// =============================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function logado() {
+      return request.auth != null;
+    }
+
+    function ehProprio(uid) {
+      return logado() && request.auth.uid == uid;
+    }
+
+    function ehProfissional() {
+      return logado() &&
+             exists(/databases/$(database)/documents/profissionais/$(request.auth.uid));
+    }
+
+    function profissionalExiste(uid) {
+      return exists(/databases/$(database)/documents/profissionais/$(uid));
+    }
+
+    // Retorna true se o profissional logado tem status "ativo"
+    // E a assinatura ainda não venceu.
+    function profissionalAtivo() {
+      let prof = get(/databases/$(database)/documents/profissionais/$(request.auth.uid)).data;
+      return logado()
+          && prof.status == 'ativo'
+          && (prof.assinatura_ate == null
+              || prof.assinatura_ate > request.time);
+    }
+
+    // ---------- PROFISSIONAIS ----------
+    match /profissionais/{uid} {
+      // O profissional pode SEMPRE ler/escrever seu próprio doc
+      // (mesmo com assinatura vencida — pra conseguir ver a tela de bloqueio)
+      allow read, write: if ehProprio(uid);
+      allow create: if logado() && request.auth.uid == uid;
+    }
+
+    // ---------- PACIENTES ----------
+    match /pacientes/{uid} {
+      // Leitura: paciente lê o próprio, OU profissional ativo dono do paciente
+      allow get: if ehProprio(uid) ||
+                    (profissionalAtivo() && resource.data.profissional_id == request.auth.uid);
+
+      // Listagem: só profissionais com assinatura ATIVA podem listar
+      allow list: if profissionalAtivo();
+
+      // Criação: aceita dois cenários
+      //   A) Fono criando paciente dela (fluxo via instância secundária)
+      //   B) Paciente recém-criado escrevendo seu próprio doc (fallback)
+      allow create: if request.resource.data.tipo == 'paciente'
+                    && request.resource.data.uid == uid
+                    && profissionalExiste(request.resource.data.profissional_id)
+                    && (
+                      // (A) Fono criando paciente dela
+                      (ehProfissional()
+                        && request.resource.data.profissional_id == request.auth.uid)
+                      ||
+                      // (B) Paciente criando o próprio doc (fluxo antigo)
+                      ehProprio(uid)
+                    );
+
+      allow update: if (profissionalAtivo()
+                          && resource.data.profissional_id == request.auth.uid)
+                    || (ehProprio(uid)
+                          && request.resource.data.profissional_id == resource.data.profissional_id
+                          && request.resource.data.tipo == resource.data.tipo);
+
+      allow delete: if profissionalAtivo() && resource.data.profissional_id == request.auth.uid;
+    }
+
+    // ---------- PRESCRICOES ----------
+    match /prescricoes/{prescricaoId} {
+      allow get: if logado() && (
+        request.auth.uid == resource.data.paciente_id ||
+        request.auth.uid == resource.data.profissional_id
+      );
+
+      allow list: if logado();
+
+      // Criação só por profissional ATIVO (ou paciente recém-criado, p/ fluxo antigo)
+      allow create: if logado()
+                    && profissionalExiste(request.resource.data.profissional_id)
+                    && (
+                      (profissionalAtivo()
+                        && request.resource.data.profissional_id == request.auth.uid)
+                      ||
+                      (request.auth.uid == request.resource.data.paciente_id)
+                    );
+
+      allow update, delete: if profissionalAtivo() &&
+                               resource.data.profissional_id == request.auth.uid;
+    }
+
+    // ---------- PROGRESSO_EXERCICIOS ----------
+    match /progresso_exercicios/{progressoId} {
+      allow get: if logado() && (
+        request.auth.uid == resource.data.paciente_id ||
+        request.auth.uid == resource.data.profissional_id
+      );
+
+      allow list: if logado();
+
+      allow create: if logado() &&
+                       request.resource.data.paciente_id == request.auth.uid;
+
+      allow update, delete: if logado() &&
+                               resource.data.paciente_id == request.auth.uid;
+    }
+  }
+}

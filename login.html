@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login do Profissional - Liri</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">
+      <img src="/img/girafa.png" alt="Girafa Liri" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
+      Liri
+    </div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="QuemSomos.html">Quem Somos</a>
+      <a href="login.html" class="btn">Área do Profissional</a>
+    </nav>
+  </header>
+
+  <section class="secao-login">
+    <div class="cartao-login">
+
+      <h2>Área do Profissional</h2>
+      <p class="subtitulo">
+        Acesse sua conta para acompanhar o desempenho dos pacientes
+      </p>
+
+      <!-- Mensagem de erro (fica oculta até aparecer algum erro) -->
+      <div id="mensagem-erro" style="
+        display: none;
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+      "></div>
+
+      <form id="form-login">
+
+        <div class="grupo-input">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" placeholder="exemplo@email.com" autocomplete="email" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="senha">Senha</label>
+          <input id="senha" type="password" placeholder="********" autocomplete="current-password" required>
+        </div>
+
+        <!-- Lembrar -->
+        <div class="lembrar">
+          <input type="checkbox" id="lembrar">
+          <label for="lembrar">Lembrar de mim</label>
+        </div>
+
+        <button type="submit" class="botao-entrar" id="btn-entrar">Entrar</button>
+
+      </form>
+
+      <!-- Divisor "OU" e botão Google -->
+      <div class="divisor-ou">ou</div>
+
+      <button type="button" class="botao-google" id="btn-google">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+        </svg>
+        Entrar com Google
+      </button>
+
+      <div class="links-rodape">
+        <a href="esqueci-senha.html">Esqueceu sua senha?</a>
+        <br>
+        Não tem uma conta? <a href="cadastro.html">Cadastre-se</a>
+      </div>
+
+      <hr>
+
+    </div>
+  </section>
+
+  <footer class="rodape">
+    <div class="rodape-container">
+      <div class="rodape-grade">
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Navegação</h4>
+          <ul class="rodape-lista">
+            <li><a href="index.html">Início</a></li>
+            <li><a href="QuemSomos.html">Quem Somos</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Acesso</h4>
+          <ul class="rodape-lista">
+            <li><a href="cadastro.html">Área do Profissional</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Contato</h4>
+          <address class="rodape-contato">
+            <p>contato@liri.com.br</p>
+            <p>(11) 3456-7890</p>
+            <p>São Paulo, SP</p>
+          </address>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="rodape-inferior">
+      <p>&copy; 2025 Liri. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script type="module" src="login.js"></script>
+</body>
+
+</html>

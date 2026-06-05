@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar Senha - Liri</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">
+      <img src="/img/girafa.png" alt="Girafa Liri" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
+      Liri
+    </div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="QuemSomos.html">Quem Somos</a>
+      <a href="login.html" class="btn">Área do Profissional</a>
+    </nav>
+  </header>
+
+  <section class="secao-login">
+    <div class="cartao-login">
+
+      <h2>Recuperar Senha</h2>
+      <p class="subtitulo">
+        Digite seu e-mail cadastrado e enviaremos um link para você criar uma nova senha.
+      </p>
+
+      <!-- Mensagem (erro ou sucesso) -->
+      <div id="mensagem" style="
+        display: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+      "></div>
+
+      <form id="form-recuperar">
+
+        <div class="grupo-input">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" placeholder="exemplo@email.com" autocomplete="email" required>
+        </div>
+
+        <button type="submit" class="botao-entrar" id="btn-enviar">Enviar link de recuperação</button>
+
+      </form>
+
+      <div class="links-rodape">
+        <a href="login.html">← Voltar para o login</a>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="rodape">
+    <div class="rodape-container">
+      <div class="rodape-grade">
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Navegação</h4>
+          <ul class="rodape-lista">
+            <li><a href="index.html">Início</a></li>
+            <li><a href="QuemSomos.html">Quem Somos</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Acesso</h4>
+          <ul class="rodape-lista">
+            <li><a href="cadastro.html">Área do Profissional</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Contato</h4>
+          <address class="rodape-contato">
+            <p>contato@liri.com.br</p>
+            <p>(11) 3456-7890</p>
+            <p>São Paulo, SP</p>
+          </address>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="rodape-inferior">
+      <p>&copy; 2025 Liri. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { auth } from "./firebase.js";
+    import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+
+    const form = document.getElementById("form-recuperar");
+    const btnEnviar = document.getElementById("btn-enviar");
+    const mensagem = document.getElementById("mensagem");
+
+    function traduzirErro(codigo) {
+      const erros = {
+        "auth/invalid-email": "E-mail inválido.",
+        "auth/user-not-found": "Nenhuma conta encontrada com este e-mail.",
+        "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
+        "auth/missing-email": "Digite seu e-mail.",
+      };
+      return erros[codigo] || "Ocorreu um erro. Tente novamente.";
+    }
+
+    function mostrarMensagem(texto, tipo) {
+      mensagem.textContent = texto;
+      mensagem.style.display = "block";
+      if (tipo === "sucesso") {
+        mensagem.style.background = "#dcfce7";
+        mensagem.style.color = "#166534";
+      } else {
+        mensagem.style.background = "#fee2e2";
+        mensagem.style.color = "#dc2626";
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      mensagem.style.display = "none";
+
+      const email = document.getElementById("email").value.trim();
+
+      btnEnviar.textContent = "Enviando...";
+      btnEnviar.disabled = true;
+
+      try {
+        // Configura para que o link do e-mail leve para a página customizada "nova-senha.html"
+        const actionCodeSettings = {
+          url: window.location.origin + "/nova-senha.html",
+          handleCodeInApp: false,
+        };
+
+        await sendPasswordResetEmail(auth, email, actionCodeSettings);
+        mostrarMensagem(
+          "E-mail enviado com sucesso! Verifique sua caixa de entrada (e a pasta de spam) e siga as instruções para criar uma nova senha.",
+          "sucesso"
+        );
+        form.reset();
+        btnEnviar.textContent = "Enviar novamente";
+      } catch (erro) {
+        mostrarMensagem(traduzirErro(erro.code), "erro");
+        btnEnviar.textContent = "Enviar link de recuperação";
+      }
+
+      btnEnviar.disabled = false;
+    });
+  </script>
+
+</body>
+
+</html>

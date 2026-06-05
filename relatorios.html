@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatórios - Liri</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styleProfissional.css">
+  <link rel="stylesheet" href="relatorios.css">
+
+  <!-- Chart.js para os gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- jsPDF para exportar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.0/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <a href="dashboard.html" class="topbar-logo">
+      <img src="/img/girafa.png" alt="Girafa Liri" style="width: 36px; height: 36px; object-fit: contain;">
+      <span class="logo-name">Liri</span>
+    </a>
+    <div class="topbar-right">
+      <div class="topbar-user">
+        <span class="topbar-user-name" id="topbar-nome">—</span>
+        <span class="topbar-user-role">Fonoaudióloga</span>
+      </div>
+      <button class="btn-sair" id="btn-sair">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
+        </svg>
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <a href="dashboard.html" class="menu-item">Início</a>
+    <a href="dashboard.html#pacientes" class="menu-item">Pacientes</a>
+    <a href="relatorios.html" class="menu-item active">Relatórios</a>
+    <a href="dashboard.html#configuracoes" class="menu-item">Configurações</a>
+  </aside>
+
+  <!-- CONTEÚDO PRINCIPAL -->
+  <main class="main">
+    <div class="pg-head">
+      <div>
+        <h1 class="pg-title">Relatórios</h1>
+        <p class="pg-sub">Análise de desempenho dos pacientes</p>
+      </div>
+      <div class="acoes-exportar">
+        <button class="btn-outline" id="btn-export-csv">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Exportar CSV
+        </button>
+        <button class="btn-primary" id="btn-export-pdf">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Exportar PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros-bar">
+      <div class="filtro-grupo">
+        <label for="filtro-paciente">Paciente</label>
+        <select id="filtro-paciente">
+          <option value="todos">Todos os pacientes</option>
+        </select>
+      </div>
+      <div class="filtro-grupo">
+        <label for="filtro-periodo">Período</label>
+        <select id="filtro-periodo">
+          <option value="7">Últimos 7 dias</option>
+          <option value="30" selected>Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="todos">Todo o período</option>
+        </select>
+      </div>
+      <button class="btn-primary" id="btn-aplicar">Aplicar filtros</button>
+    </div>
+
+    <!-- CARDS RESUMO -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Exercícios realizados</div>
+        <div class="stat-value" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Taxa de acerto</div>
+        <div class="stat-value" id="stat-acerto">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pacientes ativos</div>
+        <div class="stat-value" id="stat-ativos">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Média por paciente</div>
+        <div class="stat-value" id="stat-media">—</div>
+      </div>
+    </div>
+
+    <!-- GRÁFICO: EVOLUÇÃO TEMPORAL (LINHA) -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Evolução de exercícios ao longo do tempo</span>
+        <span class="panel-sub" id="sub-evolucao">—</span>
+      </div>
+      <div class="panel-body" style="padding: 16px 20px;">
+        <div class="chart-wrap">
+          <canvas id="grafico-evolucao"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRID: 2 GRÁFICOS LADO A LADO -->
+    <div class="grafico-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Acertos vs Erros</span>
+        </div>
+        <div class="panel-body" style="padding: 16px 20px;">
+          <div class="chart-wrap" style="height: 260px;">
+            <canvas id="grafico-acertos"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Exercícios mais realizados</span>
+        </div>
+        <div class="panel-body" style="padding: 16px 20px;">
+          <div class="chart-wrap" style="height: 260px;">
+            <canvas id="grafico-exercicios"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABELA: DESEMPENHO POR PACIENTE -->
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">Desempenho por paciente</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Paciente</th>
+              <th>Total exercícios</th>
+              <th>Acertos</th>
+              <th>Taxa de acerto</th>
+              <th>Última prática</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-desempenho">
+            <tr>
+              <td colspan="5" style="text-align:center;color:#9ca3af;padding:32px">
+                Carregando dados...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module" src="relatorios.js"></script>
+</body>
+
+</html>

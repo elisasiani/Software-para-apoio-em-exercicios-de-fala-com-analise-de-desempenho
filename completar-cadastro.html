@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Completar Cadastro - Liri</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">
+      <img src="/img/girafa.png" alt="Girafa Liri" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
+      Liri
+    </div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="QuemSomos.html">Quem Somos</a>
+    </nav>
+  </header>
+
+  <section class="secao-cadastro">
+    <div class="cartao-cadastro">
+
+      <h2>Quase lá! 🎉</h2>
+      <p class="subtitulo">
+        Para concluir seu cadastro, precisamos de algumas informações profissionais.
+      </p>
+
+      <!-- Box mostrando os dados que vieram do Google -->
+      <div id="info-google" style="
+        background: #f3e8ff;
+        border-left: 4px solid #7a08af;
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        text-align: left;
+        font-size: 0.88rem;
+      ">
+        <strong>Conta conectada:</strong><br>
+        <span id="info-nome" style="color: #4b5563;">—</span><br>
+        <span id="info-email" style="color: #4b5563;">—</span>
+      </div>
+
+      <!-- Mensagem de feedback (erro ou sucesso) -->
+      <div id="mensagem" style="
+        display: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
+      "></div>
+
+      <form id="form-completar">
+
+        <div class="grupo-input">
+          <label for="cpf">CPF</label>
+          <input id="cpf" type="text" placeholder="000.000.000-00" maxlength="14" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="telefone">Telefone</label>
+          <input id="telefone" type="tel" placeholder="(11) 91234-5678" maxlength="15" required>
+        </div>
+
+        <div class="grupo-input">
+          <label for="crfa">CRFa</label>
+          <input id="crfa" type="text" placeholder="Ex: 1-12345" required>
+        </div>
+
+        <button type="submit" class="botao-entrar" id="btn-concluir">Concluir cadastro</button>
+
+      </form>
+
+      <div class="links-rodape">
+        <a href="#" id="link-cancelar">Cancelar e sair</a>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="rodape">
+    <div class="rodape-container">
+      <div class="rodape-grade">
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Navegação</h4>
+          <ul class="rodape-lista">
+            <li><a href="index.html">Início</a></li>
+            <li><a href="QuemSomos.html">Quem Somos</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Acesso</h4>
+          <ul class="rodape-lista">
+            <li><a href="cadastro.html">Área do Profissional</a></li>
+          </ul>
+        </div>
+
+        <div class="rodape-coluna">
+          <h4 class="rodape-titulo">Contato</h4>
+          <address class="rodape-contato">
+            <p>contato@liri.com.br</p>
+            <p>(11) 3456-7890</p>
+            <p>São Paulo, SP</p>
+          </address>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="rodape-inferior">
+      <p>&copy; 2025 Liri. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    const form = document.getElementById("form-completar");
+    const btnConcluir = document.getElementById("btn-concluir");
+    const mensagem = document.getElementById("mensagem");
+
+    let usuarioAtual = null;
+
+    function mostrarErro(msg) {
+      mensagem.style.background = "#fee2e2";
+      mensagem.style.color = "#dc2626";
+      mensagem.textContent = msg;
+      mensagem.style.display = "block";
+    }
+
+    function mostrarSucesso(msg) {
+      mensagem.style.background = "#dcfce7";
+      mensagem.style.color = "#16a34a";
+      mensagem.textContent = msg;
+      mensagem.style.display = "block";
+    }
+
+    // Máscara CPF
+    document.getElementById("cpf").addEventListener("input", (e) => {
+      let v = e.target.value.replace(/\D/g, "");
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+      e.target.value = v;
+    });
+
+    // Máscara Telefone
+    document.getElementById("telefone").addEventListener("input", (e) => {
+      let v = e.target.value.replace(/\D/g, "");
+      v = v.replace(/^(\d{2})(\d)/, "($1) $2");
+      v = v.replace(/(\d{5})(\d{1,4})$/, "$1-$2");
+      e.target.value = v;
+    });
+
+    // Proteção da página: só acessa se estiver autenticado
+    onAuthStateChanged(auth, async (usuario) => {
+      if (!usuario) {
+        window.location.href = "login.html";
+        return;
+      }
+
+      usuarioAtual = usuario;
+
+      // Mostra os dados que vieram do Google
+      document.getElementById("info-nome").textContent = usuario.displayName || "Profissional";
+      document.getElementById("info-email").textContent = usuario.email;
+
+      // Se já tem cadastro completo, redireciona para o dashboard
+      const ref = doc(db, "profissionais", usuario.uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        window.location.href = "dashboard.html";
+      }
+    });
+
+    // Submeter o formulário
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      mensagem.style.display = "none";
+
+      if (!usuarioAtual) {
+        mostrarErro("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      const cpf = document.getElementById("cpf").value.trim();
+      const telefone = document.getElementById("telefone").value.trim();
+      const crfa = document.getElementById("crfa").value.trim();
+
+      btnConcluir.textContent = "Salvando...";
+      btnConcluir.disabled = true;
+
+      try {
+        // Salva o cadastro no Firestore
+        await setDoc(doc(db, "profissionais", usuarioAtual.uid), {
+          nome:     usuarioAtual.displayName || "Profissional",
+          email:    usuarioAtual.email,
+          cpf,
+          telefone,
+          crfa,
+          criadoEm: new Date().toISOString(),
+          loginGoogle: true
+        });
+
+        mostrarSucesso("Cadastro concluído com sucesso! Redirecionando...");
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 1500);
+
+      } catch (erro) {
+        console.error(erro);
+        mostrarErro("Erro ao salvar. Tente novamente.");
+        btnConcluir.textContent = "Concluir cadastro";
+        btnConcluir.disabled = false;
+      }
+    });
+
+    // Cancelar: faz logout e volta para o login
+    document.getElementById("link-cancelar").addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (confirm("Tem certeza que deseja cancelar? Sua conta Google será desconectada.")) {
+        await signOut(auth);
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+
+</body>
+
+</html>
