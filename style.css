@@ -35,7 +35,7 @@ body {
     background: var(--roxo-bg);
     color: var(--cinza-600);
     font-family: 'Segoe UI', sans-serif !important;
-    background-color: #f6f3fa !important;
+    background-color: #e1e1e2c4 !important;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -824,7 +824,25 @@ a {
 }
 
 @media (max-width: 600px) {
-  nav a:not(.botao) { display: none; }
+  header {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 12px 16px;
+    row-gap: 10px;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  nav a {
+    padding: 6px 10px;
+    font-size: .82rem;
+  }
+
   .rodape-grade { grid-template-columns: 1fr; text-align: center; }
 }
 /* ────────────────────────────────────────────────────────────
@@ -864,4 +882,82 @@ a {
 
 .grupo-input input.campo-erro:focus {
     box-shadow: 0 0 5px rgba(220, 38, 38, 0.3);
+}
+
+/* ────────────────────────────────────────────────────────────
+   Carrossel — estilos que faltavam no CSS original
+   ──────────────────────────────────────────────────────────── */
+.conteudo-slide {
+  background: #fff;
+  border-radius: 16px;
+  padding: 36px 32px;
+  box-shadow: 0 8px 25px rgba(78, 1, 78, 0.08);
+  border: 1px solid rgba(123, 47, 190, 0.08);
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.icone-slide {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 16px;
+}
+
+
+.tag {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 14px;
+}
+
+.tag-vermelho { background: #fee2e2; color: #b91c1c; }
+.tag-roxo    { background: #ede9fe; color: #6d28d9; }
+.tag-verde   { background: #dcfce7; color: #15803d; }
+
+.titulo-slide {
+  font-size: 1.35rem;
+  color: #2d0a4e;
+  font-weight: 700;
+  margin: 6px 0 12px;
+}
+
+.texto-slide {
+  color: #4b5563;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.pills {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  padding: 5px 12px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.pill-vermelho { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.pill-roxo    { background: #faf5ff; color: #6d28d9; border: 1px solid #e9d5ff; }
+.pill-verde   { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+/* Rodapé — colunas (classe que estava no HTML mas sem estilo) */
+.rodape-coluna h4 {
+  margin-top: 0;
 }

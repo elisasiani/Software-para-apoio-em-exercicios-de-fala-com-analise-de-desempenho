@@ -4,17 +4,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cadastro - Liri</title>
+  <title>Liri</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mascote.css">
+  <link rel="shortcut icon" href="/img/gira.png?v=2" type="image/x-icon">
 </head>
 
 <body>
   <header>
-    <div class="logo">
+    <a href="index.html" class="logo">
       <img src="/img/girafa.png" alt="Girafa Liri"
         style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
       Liri
-    </div>
+    </a>
     <nav>
       <a href="index.html">Início</a>
       <a href="QuemSomos.html">Quem Somos</a>
@@ -145,6 +147,16 @@
 
   <script src="script.js"></script>
   <script type="module" src="cadastro.js"></script>
+  <!-- Mascote flutuante -->
+  <div class="mascote-liri">
+    <div class="mascote-balao" id="mascote-balao">
+      <span id="mascote-frase">Oi! Eu sou a Liri! 🦒</span>
+    </div>
+    <a href="index.html" aria-label="Voltar ao início" tabindex="0">
+      <img src="/img/girafa_historia.png" alt="Mascote Liri" class="mascote-liri-img" id="mascote-img">
+    </a>
+  </div>
+  <script src="mascote.js"></script>
 </body>
 
 </html>

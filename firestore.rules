@@ -1,0 +1,136 @@
+// =============================================================
+// Firestore Security Rules — Liri (v6)
+// Projeto: app-fonoaudiologia-gamificado
+// =============================================================
+// Como aplicar:
+// 1. Firebase Console > Firestore Database > Aba "Regras"
+// 2. APAGUE tudo que estiver lá e cole este conteúdo
+// 3. Clique em "Publicar"
+// =============================================================
+//
+// Mudanças v4 → v5:
+//   Como o cadastro de paciente agora roda em uma instância
+//   secundária do Firebase, a fono permanece logada e é ELA
+//   quem grava o doc do paciente. As regras agora permitem
+//   esse caso (fono criando paciente dela), mantendo também
+//   o caso antigo (paciente criando seu próprio doc) por
+//   compatibilidade e robustez.
+//
+// Mudanças v5 → v6 (segurança):
+//   "allow list" em prescricoes e progresso_exercicios estava
+//   liberado para qualquer usuário logado, sem checar dono do
+//   documento — um paciente autenticado poderia, em teoria,
+//   listar a coleção inteira (dados de outros pacientes/áudios).
+//   Agora "list" exige a mesma condição de "get" (só o próprio
+//   paciente ou o profissional responsável). Como todas as
+//   queries do app já filtram por paciente_id/profissional_id,
+//   isso não muda nada no funcionamento — só fecha a brecha.
+// =============================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Helpers ----------
+    function logado() {
+      return request.auth != null;
+    }
+
+    function ehProprio(uid) {
+      return logado() && request.auth.uid == uid;
+    }
+
+    function ehProfissional() {
+      return logado() &&
+             exists(/databases/$(database)/documents/profissionais/$(request.auth.uid));
+    }
+
+    function profissionalExiste(uid) {
+      return exists(/databases/$(database)/documents/profissionais/$(uid));
+    }
+
+    // ---------- PROFISSIONAIS ----------
+    match /profissionais/{uid} {
+      allow read, write: if ehProprio(uid);
+      allow create: if logado() && request.auth.uid == uid;
+    }
+
+    // ---------- PACIENTES ----------
+    match /pacientes/{uid} {
+      allow get: if ehProprio(uid) ||
+                    (ehProfissional() && resource.data.profissional_id == request.auth.uid);
+
+      allow list: if ehProfissional();
+
+      // Criação: aceita dois cenários
+      //   A) Fono criando paciente dela (fluxo via instância secundária)
+      //   B) Paciente recém-criado escrevendo seu próprio doc (fallback)
+      allow create: if request.resource.data.tipo == 'paciente'
+                    && request.resource.data.uid == uid
+                    && profissionalExiste(request.resource.data.profissional_id)
+                    && (
+                      // (A) Fono criando paciente dela
+                      (ehProfissional()
+                        && request.resource.data.profissional_id == request.auth.uid)
+                      ||
+                      // (B) Paciente criando o próprio doc (fluxo antigo)
+                      ehProprio(uid)
+                    );
+
+      allow update: if (ehProfissional()
+                          && resource.data.profissional_id == request.auth.uid)
+                    || (ehProprio(uid)
+                          && request.resource.data.profissional_id == resource.data.profissional_id
+                          && request.resource.data.tipo == resource.data.tipo);
+
+      allow delete: if ehProfissional() && resource.data.profissional_id == request.auth.uid;
+    }
+
+    // ---------- PRESCRICOES ----------
+    match /prescricoes/{prescricaoId} {
+      allow get: if logado() && (
+        request.auth.uid == resource.data.paciente_id ||
+        request.auth.uid == resource.data.profissional_id
+      );
+
+      allow list: if logado() && (
+        resource.data.paciente_id == request.auth.uid ||
+        resource.data.profissional_id == request.auth.uid
+      );
+
+      // Aceita criação tanto pela fono (caso normal agora) quanto
+      // pelo próprio paciente (compatibilidade).
+      allow create: if logado()
+                    && profissionalExiste(request.resource.data.profissional_id)
+                    && (
+                      (ehProfissional()
+                        && request.resource.data.profissional_id == request.auth.uid)
+                      ||
+                      (request.auth.uid == request.resource.data.paciente_id)
+                    );
+
+      allow update, delete: if ehProfissional() &&
+                               resource.data.profissional_id == request.auth.uid;
+    }
+
+    // ---------- PROGRESSO_EXERCICIOS ----------
+    match /progresso_exercicios/{progressoId} {
+      allow get: if logado() && (
+        request.auth.uid == resource.data.paciente_id ||
+        request.auth.uid == resource.data.profissional_id
+      );
+
+      allow list: if logado() && (
+        resource.data.paciente_id == request.auth.uid ||
+        resource.data.profissional_id == request.auth.uid
+      );
+
+      allow create: if logado() &&
+                       request.resource.data.paciente_id == request.auth.uid;
+
+      allow update, delete: if logado() &&
+                               resource.data.paciente_id == request.auth.uid;
+    }
+  }
+}

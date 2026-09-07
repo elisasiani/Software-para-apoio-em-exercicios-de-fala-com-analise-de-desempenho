@@ -1,0 +1,102 @@
+/* ─────────────────────────────────────────────────── */
+/* MASCOTE FLUTUANTE — Girafa Liri                     */
+/* Fica fixo no canto da tela em todas as páginas       */
+/* ─────────────────────────────────────────────────── */
+
+.mascote-liri {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.mascote-liri-img {
+  width: 74px;
+  height: 74px;
+  cursor: pointer;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(122, 8, 175, 0.35));
+  animation: mascote-flutuar 3.2s ease-in-out infinite;
+  transition: transform 0.25s ease;
+  user-select: none;
+  -webkit-user-drag: none;
+  display: block;
+}
+
+.mascote-liri a {
+  display: inline-block;
+  line-height: 0;
+}
+
+.mascote-liri-img:hover {
+  animation-play-state: paused;
+  transform: scale(1.12) rotate(-6deg);
+}
+
+.mascote-liri-img:active {
+  transform: scale(0.95) rotate(4deg);
+}
+
+/* Flutuação suave contínua */
+@keyframes mascote-flutuar {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+/* Balão de fala */
+.mascote-balao {
+  max-width: 220px;
+  background: var(--branco, #fff);
+  color: var(--roxo-escuro, #510077);
+  border: 1.5px solid var(--roxo-borda, #e9d5ff);
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-family: 'Segoe UI', sans-serif;
+  line-height: 1.35;
+  box-shadow: var(--sombra-media, 0 6px 24px rgba(140, 63, 175, .13));
+  position: relative;
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.mascote-balao.visivel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.mascote-balao::after {
+  content: "";
+  position: absolute;
+  right: 22px;
+  bottom: -7px;
+  width: 14px;
+  height: 14px;
+  background: var(--branco, #fff);
+  border-right: 1.5px solid var(--roxo-borda, #e9d5ff);
+  border-bottom: 1.5px solid var(--roxo-borda, #e9d5ff);
+  transform: rotate(45deg);
+}
+
+/* Em telas pequenas, mascote um pouco menor pra não atrapalhar */
+@media (max-width: 600px) {
+  .mascote-liri-img {
+    width: 58px;
+    height: 58px;
+  }
+  .mascote-liri {
+    right: 14px;
+    bottom: 14px;
+  }
+  .mascote-balao {
+    max-width: 170px;
+    font-size: 0.8rem;
+  }
+}

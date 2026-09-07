@@ -1,0 +1,12 @@
+# Dependências instaladas localmente — recriadas com "npm install"
+node_modules/
+
+# Segredos reais — NUNCA suba isso pro GitHub
+.env
+.env.local
+.env.*.local
+
+# Logs e configs geradas pelo Firebase
+.runtimeconfig.json
+firebase-debug.log
+firebase-debug.*.log

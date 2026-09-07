@@ -10,12 +10,12 @@
   --purple: #7c3aed;
   --purple-lt: #a855f7;
   --purple-bg: #f5f3ff;
-  --purple-100: #ede9fe;
+  --purple-100: #dad7d78f;
   --white: #ffffff;
   --gray-50: #f8f9fb;
   --gray-100: #f1f2f6;
   --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
+  --gray-300: #080808;
   --gray-400: #9ca3af;
   --gray-600: #4b5563;
   --gray-900: #111827;
@@ -143,8 +143,18 @@ body {
   font-weight: 500;
   color: var(--gray-600);
   text-align: left;
+  text-decoration: none;
   transition: all .18s;
   margin-bottom: 2px;
+}
+
+/* Caso o item seja um <a>, remove a cor "visitado" padrão do navegador */
+.menu-item:visited {
+  color: var(--gray-600);
+}
+
+.menu-item.active:visited {
+  color: var(--purple);
 }
 
 .menu-item:hover {

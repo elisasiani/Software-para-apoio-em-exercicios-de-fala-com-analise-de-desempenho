@@ -55,6 +55,10 @@ let prescricoesAtuais = [];     // [{ id, ...dados }]
 let exerciciosConcluidos = new Set();
 let novosSelecionados = [];     // exercícios marcados para adicionar
 let trilhaExpandida = null;
+let progressosPaciente = [];    // cache de progresso_exercicios deste paciente (heatmap + PDF)
+let mapaDificuldadePorPrescricao = new Map(); // prescricao_id -> dificuldade (join manual)
+let chartEvolucaoPaciente = null;
+let chartDificuldadePaciente = null;
 
 // ── Inicialização ────────────────────────────────────────────────────────────
 const params = new URLSearchParams(window.location.search);
@@ -74,6 +78,8 @@ onAuthStateChanged(auth, async (usuario) => {
   await carregarPaciente();
   await carregarPrescricoes();
   await carregarAudios();
+  await carregarHeatmapFrequencia();
+  renderRelatorioDesempenho();
 });
 
 // ── Carregar dados do paciente ───────────────────────────────────────────────
@@ -428,6 +434,8 @@ function mostrarToast(msg, cor = '#059669') {
 // Busca os progresso_exercicios que têm áudio anexado e
 // renderiza um player <audio> para cada um.
 // =============================================================
+let audiosPacienteCache = []; // cache dos áudios buscados (filtro de data aplica em cima disso)
+
 async function carregarAudios() {
   const lista = document.getElementById('lista-audios');
   if (!lista) return;
@@ -440,58 +448,8 @@ async function carregarAudios() {
       where('tem_audio', '==', true)
     );
     const snap = await getDocs(q);
-
-    if (snap.empty) {
-      lista.innerHTML = `<div class="empty-msg">
-        Este paciente ainda não enviou nenhum áudio. 🎙️
-      </div>`;
-      document.getElementById('contador-audios').textContent = '0';
-      return;
-    }
-
-    // Ordena por data (mais recente primeiro)
-    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    docs.sort((a, b) => {
-      const ta = a.concluido_em?.toDate?.()?.getTime() || 0;
-      const tb = b.concluido_em?.toDate?.()?.getTime() || 0;
-      return tb - ta;
-    });
-
-    document.getElementById('contador-audios').textContent = docs.length;
-
-    lista.innerHTML = docs.map(d => {
-      const data    = d.concluido_em?.toDate?.();
-      const dataStr = data
-        ? data.toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-          })
-        : '—';
-      const palavra    = d.palavraAlvo || 'exercício';
-      const tentativas = d.tentativas  || 1;
-      const formato    = d.audio_formato || 'audio/mp4';
-      const base64     = d.audio_base64;
-
-      // Monta data URL para o player HTML5 tocar direto
-      const audioSrc = `data:${formato};base64,${base64}`;
-
-      return `
-        <div class="audio-item">
-          <div class="audio-item-cabecalho">
-            <div>
-              <div class="audio-palavra">"${palavra}"</div>
-              <div class="audio-meta">📅 ${dataStr}</div>
-            </div>
-            <div>
-              <span class="audio-tag tentativas">
-                ${tentativas} ${tentativas === 1 ? 'tentativa' : 'tentativas'}
-              </span>
-            </div>
-          </div>
-          <audio controls preload="none" src="${audioSrc}"></audio>
-        </div>
-      `;
-    }).join('');
+    audiosPacienteCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderizarListaAudios();
   } catch (e) {
     console.error('Erro ao carregar áudios:', e);
     lista.innerHTML = `<div class="empty-msg" style="color:#dc2626">
@@ -499,6 +457,91 @@ async function carregarAudios() {
     </div>`;
   }
 }
+
+// Aplica o filtro de data (De/Até) sobre o cache e desenha a lista
+function renderizarListaAudios() {
+  const lista = document.getElementById('lista-audios');
+  const contador = document.getElementById('contador-audios');
+  if (!lista || !contador) return;
+
+  const valorDe = document.getElementById('audios-filtro-de')?.value;
+  const valorAte = document.getElementById('audios-filtro-ate')?.value;
+
+  const dataDe = valorDe ? new Date(`${valorDe}T00:00:00`) : null;
+  const dataAte = valorAte ? new Date(`${valorAte}T23:59:59`) : null;
+
+  const filtrando = Boolean(valorDe || valorAte);
+
+  let docs = audiosPacienteCache.filter(d => {
+    const data = d.concluido_em?.toDate?.();
+    if (!data) return false;
+    if (dataDe && data < dataDe) return false;
+    if (dataAte && data > dataAte) return false;
+    return true;
+  });
+
+  // Ordena por data (mais recente primeiro)
+  docs.sort((a, b) => {
+    const ta = a.concluido_em?.toDate?.()?.getTime() || 0;
+    const tb = b.concluido_em?.toDate?.()?.getTime() || 0;
+    return tb - ta;
+  });
+
+  contador.textContent = docs.length;
+
+  if (docs.length === 0) {
+    lista.innerHTML = `<div class="empty-msg">
+      ${filtrando
+        ? 'Nenhum áudio encontrado nesse período. 📅'
+        : 'Este paciente ainda não enviou nenhum áudio. 🎙️'}
+    </div>`;
+    return;
+  }
+
+  lista.innerHTML = docs.map(d => {
+    const data    = d.concluido_em?.toDate?.();
+    const dataStr = data
+      ? data.toLocaleString('pt-BR', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        })
+      : '—';
+    const palavra    = d.palavraAlvo || 'exercício';
+    const tentativas = d.tentativas  || 1;
+    const formato    = d.audio_formato || 'audio/mp4';
+    const base64     = d.audio_base64;
+
+    // Monta data URL para o player HTML5 tocar direto
+    const audioSrc = `data:${formato};base64,${base64}`;
+
+    return `
+      <div class="audio-item">
+        <div class="audio-item-cabecalho">
+          <div>
+            <div class="audio-palavra">"${palavra}"</div>
+            <div class="audio-meta">📅 ${dataStr}</div>
+          </div>
+          <div>
+            <span class="audio-tag tentativas">
+              ${tentativas} ${tentativas === 1 ? 'tentativa' : 'tentativas'}
+            </span>
+          </div>
+        </div>
+        <audio controls preload="none" src="${audioSrc}"></audio>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('audios-filtro-de')?.addEventListener('change', renderizarListaAudios);
+document.getElementById('audios-filtro-ate')?.addEventListener('change', renderizarListaAudios);
+document.getElementById('audios-limpar-filtro')?.addEventListener('click', () => {
+  const de = document.getElementById('audios-filtro-de');
+  const ate = document.getElementById('audios-filtro-ate');
+  if (de) de.value = '';
+  if (ate) ate.value = '';
+  renderizarListaAudios();
+});
 
 // =============================================================
 // EDIÇÃO DE DADOS DO PACIENTE
@@ -703,3 +746,637 @@ window.removerCustomPendente = function (exId) {
     window.renderExercicios();
   }
 };
+
+// =============================================================
+// FREQUÊNCIA DE PRÁTICA — Heatmap estilo GitHub
+// Busca todos os progresso_exercicios do paciente (não só os com
+// áudio) e monta um heatmap de atividade dos últimos 6 meses.
+// O resultado (progressosPaciente) também alimenta a exportação em PDF.
+// =============================================================
+async function carregarHeatmapFrequencia() {
+  const container = document.getElementById('heatmap-frequencia');
+  if (!container) return;
+
+  try {
+    const q = query(
+      collection(db, 'progresso_exercicios'),
+      where('paciente_id', '==', pacienteId)
+    );
+    const snap = await getDocs(q);
+    progressosPaciente = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    // Os documentos de progresso não trazem a dificuldade direto —
+    // ela mora na prescrição. Busca TODAS as prescrições do paciente
+    // (não só as ativas, pra cobrir progresso de prescrições antigas)
+    // e monta um mapa prescricao_id -> dificuldade.
+    const qPrescTodas = query(
+      collection(db, 'prescricoes'),
+      where('paciente_id', '==', pacienteId)
+    );
+    const snapPrescTodas = await getDocs(qPrescTodas);
+    mapaDificuldadePorPrescricao = new Map();
+    snapPrescTodas.forEach(d => {
+      const dados = d.data();
+      if (dados.dificuldade) {
+        mapaDificuldadePorPrescricao.set(d.id, dados.dificuldade);
+      }
+    });
+
+    // Preenche a dificuldade de cada progresso via join manual
+    // (mantém o valor original se por acaso já vier no próprio documento)
+    progressosPaciente.forEach(p => {
+      if (!p.dificuldade && p.prescricao_id) {
+        p.dificuldade = mapaDificuldadePorPrescricao.get(p.prescricao_id) || '';
+      }
+    });
+
+    renderHeatmapFrequencia();
+  } catch (e) {
+    console.error('Erro ao carregar frequência de prática:', e);
+    container.innerHTML = '<div class="empty-msg">Não foi possível carregar a frequência de prática.</div>';
+  }
+}
+
+function renderHeatmapFrequencia() {
+  const container = document.getElementById('heatmap-frequencia');
+  if (!container) return;
+
+  // Conta exercícios por dia
+  const contagemPorDia = new Map(); // "YYYY-MM-DD" -> total
+  progressosPaciente.forEach(p => {
+    if (!p.concluido_em?.toDate) return;
+    const data = p.concluido_em.toDate();
+    data.setHours(0, 0, 0, 0);
+    const chave = data.toISOString().split('T')[0];
+    contagemPorDia.set(chave, (contagemPorDia.get(chave) || 0) + 1);
+  });
+
+  const SEMANAS = 26; // ~6 meses
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  // Domingo da semana atual
+  const domingoAtual = new Date(hoje);
+  domingoAtual.setDate(domingoAtual.getDate() - domingoAtual.getDay());
+
+  // Domingo de início (SEMANAS semanas atrás)
+  const domingoInicio = new Date(domingoAtual);
+  domingoInicio.setDate(domingoInicio.getDate() - (SEMANAS - 1) * 7);
+
+  // Monta a matriz [semana][dia da semana]
+  const colunas = [];
+  for (let w = 0; w < SEMANAS; w++) {
+    const coluna = [];
+    for (let d = 0; d < 7; d++) {
+      const dia = new Date(domingoInicio);
+      dia.setDate(dia.getDate() + w * 7 + d);
+      const chave = dia.toISOString().split('T')[0];
+      const futuro = dia > hoje;
+      coluna.push({
+        data: dia,
+        contagem: futuro ? null : (contagemPorDia.get(chave) || 0)
+      });
+    }
+    colunas.push(coluna);
+  }
+
+  function nivel(contagem) {
+    if (contagem === null) return 'futuro';
+    if (contagem === 0) return 0;
+    if (contagem <= 2) return 1;
+    if (contagem <= 4) return 2;
+    if (contagem <= 7) return 3;
+    return 4;
+  }
+
+  // Labels de mês: mostra o nome na coluna em que o mês começa
+  const mesesLabels = [];
+  let mesAnterior = null;
+  colunas.forEach((coluna, i) => {
+    const mes = coluna[0].data.getMonth();
+    if (mes !== mesAnterior) {
+      mesesLabels.push({ index: i, label: coluna[0].data.toLocaleDateString('pt-BR', { month: 'short' }) });
+      mesAnterior = mes;
+    }
+  });
+
+  const diasSemanaLabels = ['', 'Seg', '', 'Qua', '', 'Sex', ''];
+
+  const registrosNoPeriodo = Array.from(contagemPorDia.entries())
+    .filter(([chave]) => new Date(chave + 'T00:00:00') >= domingoInicio);
+  const totalPeriodo = registrosNoPeriodo.reduce((acc, [, v]) => acc + v, 0);
+  const diasAtivos = registrosNoPeriodo.filter(([, v]) => v > 0).length;
+
+  container.innerHTML = `
+    <div class="heatmap-scroll">
+      <div class="heatmap-meses">
+        ${colunas.map((_, i) => {
+          const label = mesesLabels.find(m => m.index === i);
+          return `<div class="heatmap-mes-label">${label ? label.label : ''}</div>`;
+        }).join('')}
+      </div>
+      <div class="heatmap-corpo">
+        <div class="heatmap-dias-labels">
+          ${diasSemanaLabels.map(l => `<div class="heatmap-dia-label">${l}</div>`).join('')}
+        </div>
+        <div class="heatmap-grade">
+          ${colunas.map(coluna => `
+            <div class="heatmap-coluna">
+              ${coluna.map(cel => {
+                const niv = nivel(cel.contagem);
+                const titulo = niv === 'futuro'
+                  ? ''
+                  : `${cel.contagem} ${cel.contagem === 1 ? 'exercício' : 'exercícios'} em ${cel.data.toLocaleDateString('pt-BR')}`;
+                return `<div class="heatmap-dia nivel-${niv}" title="${titulo}"></div>`;
+              }).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="heatmap-legenda">
+        <span>Menos</span>
+        <div class="heatmap-dia nivel-0"></div>
+        <div class="heatmap-dia nivel-1"></div>
+        <div class="heatmap-dia nivel-2"></div>
+        <div class="heatmap-dia nivel-3"></div>
+        <div class="heatmap-dia nivel-4"></div>
+        <span>Mais</span>
+      </div>
+    </div>
+  `;
+
+  const totalEl = document.getElementById('heatmap-total');
+  if (totalEl) {
+    totalEl.textContent = diasAtivos > 0
+      ? `${diasAtivos} ${diasAtivos === 1 ? 'dia ativo' : 'dias ativos'} nos últimos 6 meses (${totalPeriodo} ${totalPeriodo === 1 ? 'exercício' : 'exercícios'})`
+      : 'Nenhuma atividade nos últimos 6 meses';
+  }
+}
+
+// =============================================================
+// RELATÓRIO DE DESEMPENHO — gráficos (evolução + dificuldade)
+// Reaproveita os dados já buscados em `progressosPaciente`
+// (carregados por carregarHeatmapFrequencia), então não faz
+// nenhuma consulta nova ao Firestore.
+// =============================================================
+function obterProgressosFiltradosPeriodo() {
+  const periodo = document.getElementById('filtro-periodo-relatorio')?.value || '30';
+  if (periodo === 'todos') return [...progressosPaciente];
+
+  const dias = parseInt(periodo);
+  const limite = new Date();
+  limite.setDate(limite.getDate() - dias);
+  limite.setHours(0, 0, 0, 0);
+
+  return progressosPaciente.filter(p => {
+    if (!p.concluido_em?.toDate) return false;
+    return p.concluido_em.toDate() >= limite;
+  });
+}
+
+function renderRelatorioDesempenho() {
+  const dadosFiltrados = obterProgressosFiltradosPeriodo();
+  atualizarStatsRelatorio(dadosFiltrados);
+  renderGraficoEvolucaoPaciente(dadosFiltrados);
+  renderGraficoDificuldadePaciente(dadosFiltrados);
+}
+
+function atualizarStatsRelatorio(dadosFiltrados) {
+  const audios = dadosFiltrados.filter(p =>
+    p.audio_base64 && p.audio_base64.length > 0
+  ).length;
+
+  const tentativas = dadosFiltrados.reduce((acc, p) => {
+    const t = p.tentativas ?? p.numero_tentativas ?? 1;
+    return acc + (typeof t === 'number' ? t : 1);
+  }, 0);
+
+  const elAudios = document.getElementById('rel-stat-audios');
+  const elTentativas = document.getElementById('rel-stat-tentativas');
+  if (elAudios) elAudios.textContent = audios;
+  if (elTentativas) elTentativas.textContent = tentativas;
+}
+
+function renderGraficoEvolucaoPaciente(dadosFiltrados) {
+  const canvas = document.getElementById('grafico-evolucao-paciente');
+  if (!canvas) return;
+
+  const periodo = document.getElementById('filtro-periodo-relatorio')?.value || '30';
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  let agrupamento = 'dia';
+  let dataInicio;
+
+  if (periodo === '7' || periodo === '30') {
+    const dias = parseInt(periodo);
+    dataInicio = new Date(hoje);
+    dataInicio.setDate(dataInicio.getDate() - (dias - 1));
+  } else if (periodo === '90') {
+    agrupamento = 'semana';
+    dataInicio = new Date(hoje);
+    dataInicio.setDate(dataInicio.getDate() - 89);
+  } else {
+    agrupamento = 'semana';
+    const datasValidas = dadosFiltrados
+      .filter(p => p.concluido_em?.toDate)
+      .map(p => {
+        const d = p.concluido_em.toDate();
+        d.setHours(0, 0, 0, 0);
+        return d;
+      });
+
+    if (datasValidas.length > 0) {
+      dataInicio = new Date(Math.min(...datasValidas));
+    } else {
+      agrupamento = 'dia';
+      dataInicio = new Date(hoje);
+      dataInicio.setDate(dataInicio.getDate() - 29);
+    }
+  }
+
+  if (agrupamento === 'semana') {
+    const diaSemana = dataInicio.getDay();
+    const offset = diaSemana === 0 ? 6 : diaSemana - 1;
+    dataInicio.setDate(dataInicio.getDate() - offset);
+  }
+
+  const tamanhoBucketDias = agrupamento === 'semana' ? 7 : 1;
+
+  const buckets = [];
+  const cursor = new Date(dataInicio);
+  while (cursor <= hoje && buckets.length < 500) {
+    buckets.push({ inicio: new Date(cursor), total: 0 });
+    cursor.setDate(cursor.getDate() + tamanhoBucketDias);
+  }
+
+  dadosFiltrados.forEach(p => {
+    if (!p.concluido_em?.toDate) return;
+    const data = p.concluido_em.toDate();
+    data.setHours(0, 0, 0, 0);
+    if (data < dataInicio) return;
+
+    const diffDias = Math.floor((data - dataInicio) / 86400000);
+    const idx = Math.floor(diffDias / tamanhoBucketDias);
+    if (buckets[idx]) buckets[idx].total++;
+  });
+
+  const labels = buckets.map(b => {
+    const inicioStr = b.inicio.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    if (agrupamento === 'dia') return inicioStr;
+
+    const fim = new Date(b.inicio);
+    fim.setDate(fim.getDate() + 6);
+    const fimReal = fim > hoje ? hoje : fim;
+    const fimStr = fimReal.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    return `${inicioStr} - ${fimStr}`;
+  });
+
+  const dadosTotal = buckets.map(b => b.total);
+
+  if (chartEvolucaoPaciente) chartEvolucaoPaciente.destroy();
+
+  const ctx = canvas.getContext('2d');
+  chartEvolucaoPaciente = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Exercícios realizados',
+        data: dadosTotal,
+        backgroundColor: 'rgba(123, 47, 190, 0.75)',
+        borderColor: '#7B2FBE',
+        borderWidth: 1,
+        borderRadius: 4,
+        maxBarThickness: 40
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => agrupamento === 'semana' ? `Semana: ${items[0].label}` : items[0].label
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0 } },
+        x: {
+          ticks: {
+            maxTicksLimit: agrupamento === 'semana' ? 12 : 10,
+            font: { family: 'Inter', size: 11 },
+            maxRotation: agrupamento === 'semana' ? 45 : 0,
+            minRotation: 0
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderGraficoDificuldadePaciente(dadosFiltrados) {
+  const canvas = document.getElementById('grafico-dificuldade-paciente');
+  const vazio = document.getElementById('dificuldade-paciente-vazio');
+  if (!canvas || !vazio) return;
+
+  const contagem = {};
+  dadosFiltrados.forEach(p => {
+    const dif = (p.dificuldade || '').toLowerCase().trim();
+    if (!dif) return;
+    contagem[dif] = (contagem[dif] || 0) + 1;
+  });
+
+  const ordem = ['fácil', 'médio', 'difícil'];
+  const labels = Object.keys(contagem).sort((a, b) => {
+    const ia = ordem.indexOf(a);
+    const ib = ordem.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
+  const valores = labels.map(l => contagem[l]);
+  const total = valores.reduce((a, b) => a + b, 0);
+
+  const coresPorNivel = {
+    'fácil': '#4ade80',
+    'médio': '#fbbf24',
+    'difícil': '#f87171'
+  };
+  const cores = labels.map(l => coresPorNivel[l] || '#a78bfa');
+
+  if (chartDificuldadePaciente) {
+    chartDificuldadePaciente.destroy();
+    chartDificuldadePaciente = null;
+  }
+
+  if (total === 0) {
+    canvas.style.display = 'none';
+    vazio.style.display = 'flex';
+    return;
+  }
+
+  canvas.style.display = 'block';
+  vazio.style.display = 'none';
+
+  const ctx = canvas.getContext('2d');
+  chartDificuldadePaciente = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+      datasets: [{
+        data: valores,
+        backgroundColor: cores,
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '65%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { family: 'Inter', size: 12 }, padding: 16 }
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const pct = ((item.parsed / total) * 100).toFixed(0);
+              return `${item.label}: ${item.parsed} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// Reaplica os gráficos quando o período do relatório muda
+document.getElementById('filtro-periodo-relatorio')?.addEventListener('change', renderRelatorioDesempenho);
+
+// =============================================================
+// EXPORTAR RELATÓRIO EM PDF
+// Função mantida no código (sem botão conectado no momento) —
+// gera um PDF resumido com dados do paciente, estatísticas gerais,
+// distribuição por dificuldade, desempenho por fonema e frequência
+// de prática — pensado para enviar aos pais/responsáveis ou anexar
+// ao prontuário.
+// =============================================================
+async function gerarRelatorioPdf() {
+  const btn = document.getElementById('btn-exportar-pdf');
+  if (!pacienteData) {
+    mostrarToast('Aguarde o carregamento dos dados do paciente.', '#dc2626');
+    return;
+  }
+
+  const textoOriginal = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Gerando…';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const docPdf = new jsPDF();
+
+    const corRoxo = [123, 47, 190];
+    const margem = 14;
+    let y = 20;
+
+    // Cabeçalho
+    docPdf.setFontSize(18);
+    docPdf.setTextColor(...corRoxo);
+    docPdf.setFont(undefined, 'bold');
+    docPdf.text('Relatório de Evolução — Liri', margem, y);
+    y += 6;
+    docPdf.setDrawColor(...corRoxo);
+    docPdf.line(margem, y, 196, y);
+    y += 10;
+
+    // Dados do paciente
+    const nascimento = pacienteData.data_nascimento?.toDate?.();
+    const idade = nascimento ? calcularIdade(nascimento) : null;
+
+    docPdf.setFontSize(13);
+    docPdf.setTextColor(20, 20, 20);
+    docPdf.text(pacienteData.nome || 'Paciente', margem, y);
+    y += 7;
+
+    docPdf.setFontSize(10);
+    docPdf.setFont(undefined, 'normal');
+    docPdf.setTextColor(80, 80, 80);
+    [
+      `Nascimento: ${nascimento ? nascimento.toLocaleDateString('pt-BR') : '—'}${idade !== null ? ` (${idade} anos)` : ''}`,
+      `Responsável: ${pacienteData.responsavel || '—'}`,
+      `Telefone: ${pacienteData.telefone_responsavel || pacienteData.telefone || '—'}`,
+      `Relatório gerado em: ${new Date().toLocaleDateString('pt-BR')}`
+    ].forEach(linha => {
+      docPdf.text(linha, margem, y);
+      y += 5.5;
+    });
+    y += 4;
+
+    // Resumo geral
+    const total = progressosPaciente.length;
+    const comAcertoInfo = progressosPaciente.filter(p => typeof p.acertou === 'boolean');
+    const acertos = comAcertoInfo.filter(p => p.acertou).length;
+    const taxaAcertoGeral = comAcertoInfo.length > 0
+      ? Math.round((acertos / comAcertoInfo.length) * 100)
+      : null;
+    const totalTentativas = progressosPaciente.reduce((acc, p) => {
+      const t = p.tentativas ?? p.numero_tentativas ?? 1;
+      return acc + (typeof t === 'number' ? t : 1);
+    }, 0);
+    const totalAudios = progressosPaciente.filter(p => p.audio_base64 || p.tem_audio).length;
+
+    docPdf.setFontSize(12);
+    docPdf.setTextColor(...corRoxo);
+    docPdf.setFont(undefined, 'bold');
+    docPdf.text('Resumo geral', margem, y);
+    y += 3;
+
+    docPdf.autoTable({
+      startY: y,
+      margin: { left: margem, right: margem },
+      theme: 'grid',
+      headStyles: { fillColor: corRoxo },
+      styles: { fontSize: 9.5 },
+      head: [['Exercícios realizados', 'Total de tentativas', 'Áudios enviados', 'Taxa de acerto geral']],
+      body: [[
+        String(total),
+        String(totalTentativas),
+        String(totalAudios),
+        taxaAcertoGeral !== null ? `${taxaAcertoGeral}%` : '—'
+      ]]
+    });
+    y = docPdf.lastAutoTable.finalY + 10;
+
+    // Distribuição por dificuldade
+    const contagemDificuldade = {};
+    progressosPaciente.forEach(p => {
+      const dif = (p.dificuldade || '').toLowerCase().trim();
+      if (!dif) return;
+      contagemDificuldade[dif] = (contagemDificuldade[dif] || 0) + 1;
+    });
+    const ordemDif = ['fácil', 'médio', 'difícil'];
+    const labelsDif = Object.keys(contagemDificuldade).sort((a, b) => {
+      const ia = ordemDif.indexOf(a), ib = ordemDif.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+
+    if (labelsDif.length > 0) {
+      docPdf.setFontSize(12);
+      docPdf.setTextColor(...corRoxo);
+      docPdf.setFont(undefined, 'bold');
+      docPdf.text('Distribuição por nível de dificuldade', margem, y);
+      y += 3;
+
+      docPdf.autoTable({
+        startY: y,
+        margin: { left: margem, right: margem },
+        theme: 'grid',
+        headStyles: { fillColor: corRoxo },
+        styles: { fontSize: 9.5 },
+        head: [['Dificuldade', 'Exercícios', '% do total']],
+        body: labelsDif.map(l => {
+          const qtd = contagemDificuldade[l];
+          const pct = total > 0 ? Math.round((qtd / total) * 100) : 0;
+          return [l.charAt(0).toUpperCase() + l.slice(1), String(qtd), `${pct}%`];
+        })
+      });
+      y = docPdf.lastAutoTable.finalY + 10;
+    }
+
+    // Desempenho por fonema
+    const estatisticasFonema = new Map(); // fonema -> { total, acertos }
+    progressosPaciente.forEach(p => {
+      const fonema = p.trilha_fonema || p.fonema;
+      if (!fonema) return;
+      const stat = estatisticasFonema.get(fonema) || { total: 0, acertos: 0 };
+      stat.total++;
+      if (p.acertou === true) stat.acertos++;
+      estatisticasFonema.set(fonema, stat);
+    });
+
+    if (estatisticasFonema.size > 0) {
+      if (y > 250) { docPdf.addPage(); y = 20; }
+
+      docPdf.setFontSize(12);
+      docPdf.setTextColor(...corRoxo);
+      docPdf.setFont(undefined, 'bold');
+      docPdf.text('Desempenho por fonema', margem, y);
+      y += 3;
+
+      docPdf.autoTable({
+        startY: y,
+        margin: { left: margem, right: margem },
+        theme: 'grid',
+        headStyles: { fillColor: corRoxo },
+        styles: { fontSize: 9.5 },
+        head: [['Fonema', 'Exercícios', 'Taxa de acerto']],
+        body: Array.from(estatisticasFonema.entries()).map(([fonema, stat]) => [
+          fonema,
+          String(stat.total),
+          stat.total > 0 ? `${Math.round((stat.acertos / stat.total) * 100)}%` : '—'
+        ])
+      });
+      y = docPdf.lastAutoTable.finalY + 10;
+    }
+
+    // Frequência de prática (últimos 6 meses)
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const seisMesesAtras = new Date(hoje);
+    seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
+
+    const diasComPratica = new Set();
+    progressosPaciente.forEach(p => {
+      if (!p.concluido_em?.toDate) return;
+      const data = p.concluido_em.toDate();
+      if (data >= seisMesesAtras) {
+        diasComPratica.add(data.toISOString().split('T')[0]);
+      }
+    });
+
+    if (y > 260) { docPdf.addPage(); y = 20; }
+    docPdf.setFontSize(12);
+    docPdf.setTextColor(...corRoxo);
+    docPdf.setFont(undefined, 'bold');
+    docPdf.text('Frequência de prática', margem, y);
+    y += 7;
+
+    docPdf.setFontSize(10);
+    docPdf.setFont(undefined, 'normal');
+    docPdf.setTextColor(80, 80, 80);
+    docPdf.text(
+      `${diasComPratica.size} ${diasComPratica.size === 1 ? 'dia ativo' : 'dias ativos'} nos últimos 6 meses.`,
+      margem, y
+    );
+
+    // Rodapé com numeração de páginas
+    const totalPaginas = docPdf.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPaginas; i++) {
+      docPdf.setPage(i);
+      docPdf.setFontSize(8);
+      docPdf.setTextColor(150, 150, 150);
+      docPdf.text(`Liri — Software de apoio a exercícios de fala · Página ${i}/${totalPaginas}`, margem, 290);
+    }
+
+    const nomeArquivo = `relatorio-${(pacienteData.nome || 'paciente').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.pdf`;
+    docPdf.save(nomeArquivo);
+    mostrarToast('PDF gerado com sucesso!');
+  } catch (e) {
+    console.error('Erro ao gerar PDF:', e);
+    mostrarToast('Erro ao gerar o PDF. Veja o console (F12).', '#dc2626');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
+}

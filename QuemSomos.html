@@ -6,15 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Liri</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mascote.css">
+  <link rel="shortcut icon" href="/img/gira.png?v=2" type="image/x-icon">
 </head>
 
 <body>
 
   <header>
-    <div class="logo">
+    <a href="index.html" class="logo">
       <img src="/img/girafa.png" alt="Girafa Liri" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
       Liri
-    </div>
+    </a>
     <nav>
       <a href="index.html">Início</a>
       <a href="QuemSomos.html">Quem Somos</a>
@@ -90,6 +92,34 @@
         <p>Facilita o acesso ao acompanhamento fonoaudiológico fora do ambiente clínico, ampliando o alcance do
           tratamento.</p>
       </div>
+    </div>
+  </section>
+
+  <section class="secao-mascote">
+    <div>
+      <h2>Por que uma girafa?</h2>
+
+      <p>
+        A girafa é o animal com o pescoço mais longo do reino animal ela precisa se esticar, pouco a
+        pouco, para alcançar as folhas mais altas. Da mesma forma, o desenvolvimento da fala de uma
+        criança acontece em pequenos avanços: um som, uma sílaba, uma palavra de cada vez, até alcançar
+        a comunicação plena.
+      </p>
+      <p>
+        Por isso, a Liri foi criada como uma companheira gentil e paciente, que acompanha cada criança
+        de perto celebrando as pequenas conquistas do dia a dia, assim como uma girafa observa e cuida
+        do seu grupo, sempre com um olhar atento e carinhoso.
+      </p>
+    </div>
+    <div class="mascote-imagem-wrap">
+      <div class="mascote-imagem-circulo">
+        <img src="img/girafa_historia.png" alt="Girafa, mascote do Liri">
+      </div>
+      <p class="mascote-curiosidade">
+        <strong>Você sabia?</strong> Girafas também se comunicam por sons de frequência muito baixa,
+        quase inaudíveis para nós — assim como cada criança tem seu próprio ritmo e forma de se
+        expressar.
+      </p>
     </div>
   </section>
 
@@ -173,6 +203,16 @@
     </div>
   </footer>
 
+  <!-- Mascote flutuante -->
+  <div class="mascote-liri">
+    <div class="mascote-balao" id="mascote-balao">
+      <span id="mascote-frase">Oi! Eu sou a Liri! 🦒</span>
+    </div>
+    <a href="index.html" aria-label="Voltar ao início" tabindex="0">
+      <img src="/img/girafa_historia.png" alt="Mascote Liri" class="mascote-liri-img" id="mascote-img">
+    </a>
+  </div>
+  <script src="mascote.js"></script>
 </body>
 
 </html>

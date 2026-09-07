@@ -6,15 +6,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recuperar Senha - Liri</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mascote.css">
+  <style>
+    /* Indicador de passos */
+    .passos-recuperacao {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+    .passo-bolinha {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #888;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.25s;
+    }
+    .passo-bolinha.ativo {
+      background: var(--roxo, #7a08af);
+      color: #fff;
+    }
+    .passo-bolinha.concluido {
+      background: #16a34a;
+      color: #fff;
+    }
+    .passo-linha {
+      width: 30px;
+      height: 2px;
+      background: #e5e7eb;
+      align-self: center;
+    }
+
+    .etapa { display: none; }
+    .etapa.ativa { display: block; }
+
+    /* Campo de código com espaçamento largo */
+    #campo-codigo {
+      text-align: center;
+      font-size: 24px;
+      letter-spacing: 12px;
+      font-weight: 700;
+    }
+
+    .reenviar-codigo {
+      text-align: center;
+      font-size: 13px;
+      margin-top: 12px;
+      color: #666;
+    }
+    .reenviar-codigo button {
+      background: none;
+      border: none;
+      color: #8c3faf;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      font-size: 13px;
+    }
+    .reenviar-codigo button:disabled {
+      color: #aaa;
+      cursor: not-allowed;
+    }
+
+    /* Requisitos e força de senha (mesma linguagem visual do resto do site) */
+    .campo-senha { position: relative; }
+    .campo-senha input { padding-right: 40px; }
+    .ver-senha {
+      position: absolute; right: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      font-size: 18px; color: #888; padding: 4px;
+    }
+    .ver-senha:hover { color: var(--roxo); }
+
+    .requisitos {
+      margin: 10px 0 18px; padding: 12px;
+      background: #f9fafb; border-radius: 8px;
+      font-size: 13px; text-align: left;
+    }
+    .requisitos p { margin: 4px 0; color: #888; transition: color 0.2s; }
+    .requisitos p.valido { color: #16a34a; }
+    .requisitos p::before { content: "○ "; font-weight: bold; }
+    .requisitos p.valido::before { content: "✓ "; }
+
+    .forca-senha {
+      height: 4px; background: #e5e7eb;
+      border-radius: 4px; margin-top: 8px; overflow: hidden;
+    }
+    .forca-barra { height: 100%; width: 0; transition: width 0.3s, background 0.3s; }
+    .forca-texto { font-size: 12px; margin-top: 4px; color: #888; text-align: right; }
+  </style>
 </head>
 
 <body>
 
   <header>
-    <div class="logo">
+    <a href="index.html" class="logo">
       <img src="/img/girafa.png" alt="Girafa Liri" style="width: 32px; height: 32px; object-fit: contain; vertical-align: middle;">
       Liri
-    </div>
+    </a>
     <nav>
       <a href="index.html">Início</a>
       <a href="QuemSomos.html">Quem Somos</a>
@@ -26,9 +122,17 @@
     <div class="cartao-login">
 
       <h2>Recuperar Senha</h2>
-      <p class="subtitulo">
-        Digite seu e-mail cadastrado e enviaremos um link para você criar uma nova senha.
+      <p class="subtitulo" id="subtitulo-etapa">
+        Digite seu e-mail cadastrado para receber um código de verificação.
       </p>
+
+      <div class="passos-recuperacao">
+        <div class="passo-bolinha ativo" id="bolinha-1">1</div>
+        <div class="passo-linha"></div>
+        <div class="passo-bolinha" id="bolinha-2">2</div>
+        <div class="passo-linha"></div>
+        <div class="passo-bolinha" id="bolinha-3">3</div>
+      </div>
 
       <!-- Mensagem (erro ou sucesso) -->
       <div id="mensagem" style="
@@ -39,15 +143,55 @@
         font-size: 0.9rem;
       "></div>
 
-      <form id="form-recuperar">
-
+      <!-- ETAPA 1: informar e-mail -->
+      <form id="form-email" class="etapa ativa">
         <div class="grupo-input">
           <label for="email">E-mail</label>
           <input id="email" type="email" placeholder="exemplo@email.com" autocomplete="email" required>
         </div>
+        <button type="submit" class="botao-entrar" id="btn-enviar-codigo">Enviar código</button>
+      </form>
 
-        <button type="submit" class="botao-entrar" id="btn-enviar">Enviar link de recuperação</button>
+      <!-- ETAPA 2: digitar código recebido -->
+      <form id="form-codigo" class="etapa">
+        <div class="grupo-input">
+          <label for="campo-codigo">Código de 6 dígitos</label>
+          <input id="campo-codigo" type="text" inputmode="numeric" maxlength="6" placeholder="000000" required>
+        </div>
+        <button type="submit" class="botao-entrar" id="btn-verificar-codigo">Verificar código</button>
+        <div class="reenviar-codigo">
+          Não recebeu? <button type="button" id="btn-reenviar">Reenviar código</button>
+        </div>
+      </form>
 
+      <!-- ETAPA 3: nova senha -->
+      <form id="form-nova-senha" class="etapa">
+        <div class="grupo-input">
+          <label for="senha">Nova senha</label>
+          <div class="campo-senha">
+            <input id="senha" type="password" placeholder="********" autocomplete="new-password" required>
+            <button type="button" class="ver-senha" data-alvo="senha" aria-label="Mostrar senha">👁️</button>
+          </div>
+          <div class="forca-senha"><div class="forca-barra" id="forca-barra"></div></div>
+          <div class="forca-texto" id="forca-texto">Digite uma senha</div>
+        </div>
+
+        <div class="requisitos">
+          <p id="req-tamanho">Mínimo de 8 caracteres</p>
+          <p id="req-maiuscula">Uma letra maiúscula</p>
+          <p id="req-numero">Um número</p>
+          <p id="req-especial">Um caractere especial (!@#$%...)</p>
+        </div>
+
+        <div class="grupo-input">
+          <label for="confirmar-senha">Confirmar nova senha</label>
+          <div class="campo-senha">
+            <input id="confirmar-senha" type="password" placeholder="********" autocomplete="new-password" required>
+            <button type="button" class="ver-senha" data-alvo="confirmar-senha" aria-label="Mostrar senha">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="botao-entrar" id="btn-redefinir">Redefinir senha</button>
       </form>
 
       <div class="links-rodape">
@@ -60,7 +204,6 @@
   <footer class="rodape">
     <div class="rodape-container">
       <div class="rodape-grade">
-
         <div class="rodape-coluna">
           <h4 class="rodape-titulo">Navegação</h4>
           <ul class="rodape-lista">
@@ -68,14 +211,12 @@
             <li><a href="QuemSomos.html">Quem Somos</a></li>
           </ul>
         </div>
-
         <div class="rodape-coluna">
           <h4 class="rodape-titulo">Acesso</h4>
           <ul class="rodape-lista">
             <li><a href="cadastro.html">Área do Profissional</a></li>
           </ul>
         </div>
-
         <div class="rodape-coluna">
           <h4 class="rodape-titulo">Contato</h4>
           <address class="rodape-contato">
@@ -84,77 +225,25 @@
             <p>São Paulo, SP</p>
           </address>
         </div>
-
       </div>
     </div>
-
     <div class="rodape-inferior">
       <p>&copy; 2025 Liri. Todos os direitos reservados.</p>
     </div>
   </footer>
 
-  <script type="module">
-    import { auth } from "./firebase.js";
-    import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+  <!-- Mascote flutuante -->
+  <div class="mascote-liri">
+    <div class="mascote-balao" id="mascote-balao">
+      <span id="mascote-frase">Oi! Eu sou a Liri! 🦒</span>
+    </div>
+    <a href="index.html" aria-label="Voltar ao início" tabindex="0">
+      <img src="/img/girafa_historia.png" alt="Mascote Liri" class="mascote-liri-img" id="mascote-img">
+    </a>
+  </div>
+  <script src="mascote.js"></script>
 
-    const form = document.getElementById("form-recuperar");
-    const btnEnviar = document.getElementById("btn-enviar");
-    const mensagem = document.getElementById("mensagem");
-
-    function traduzirErro(codigo) {
-      const erros = {
-        "auth/invalid-email": "E-mail inválido.",
-        "auth/user-not-found": "Nenhuma conta encontrada com este e-mail.",
-        "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
-        "auth/missing-email": "Digite seu e-mail.",
-      };
-      return erros[codigo] || "Ocorreu um erro. Tente novamente.";
-    }
-
-    function mostrarMensagem(texto, tipo) {
-      mensagem.textContent = texto;
-      mensagem.style.display = "block";
-      if (tipo === "sucesso") {
-        mensagem.style.background = "#dcfce7";
-        mensagem.style.color = "#166534";
-      } else {
-        mensagem.style.background = "#fee2e2";
-        mensagem.style.color = "#dc2626";
-      }
-    }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      mensagem.style.display = "none";
-
-      const email = document.getElementById("email").value.trim();
-
-      btnEnviar.textContent = "Enviando...";
-      btnEnviar.disabled = true;
-
-      try {
-        // Configura para que o link do e-mail leve para a página customizada "nova-senha.html"
-        const actionCodeSettings = {
-          url: window.location.origin + "/nova-senha.html",
-          handleCodeInApp: false,
-        };
-
-        await sendPasswordResetEmail(auth, email, actionCodeSettings);
-        mostrarMensagem(
-          "E-mail enviado com sucesso! Verifique sua caixa de entrada (e a pasta de spam) e siga as instruções para criar uma nova senha.",
-          "sucesso"
-        );
-        form.reset();
-        btnEnviar.textContent = "Enviar novamente";
-      } catch (erro) {
-        mostrarMensagem(traduzirErro(erro.code), "erro");
-        btnEnviar.textContent = "Enviar link de recuperação";
-      }
-
-      btnEnviar.disabled = false;
-    });
-  </script>
-
+  <script type="module" src="esqueci-senha.js"></script>
 </body>
 
 </html>
