@@ -17,19 +17,15 @@
         <img class="logo-imagem" src="/img/girafa.png" alt="Girafa Liri">
         <span class="logo-texto">Liri</span>
       </a>
-      <div class="topo-cadastro-texto">
-        <span class="topo-cadastro-titulo">Cadastrar paciente</span>
-      </div>
     </div>
 
-    <a href="dashboard.html" class="botao-secundario">Voltar ao dashboard</a>
+    <a href="dashboard.html" class="botao-secundario">Voltar</a>
   </header>
 
   <main class="conteudo-cadastro">
     <section id="page-step1" class="pagina-etapa ativo">
       <header class="pagina-cabecalho">
-        <h1 class="titulo-pagina">Novo Paciente</h1>
-        <p class="subtitulo-pagina">Preencha os dados e depois selecione os exercicios prescritos.</p>
+        <h1 class="titulo-pagina">Cadastrar paciente:</h1>
       </header>
 
       <div class="indicador-progresso">
@@ -52,8 +48,7 @@
       <div class="cartao">
         <div class="cartao-topo">
           <div>
-            <h2 class="cartao-titulo">Dados pessoais</h2>
-            <p class="cartao-subtitulo">Informacoes da crianca</p>
+            <h2class="cartao-subtitulo">Preencha as informações da criança abaixo:</h2>
           </div>
         </div>
 
@@ -61,7 +56,7 @@
           <div class="grade-formulario">
             <div class="campo-grupo largura-total">
               <label class="campo-etiqueta" for="nome">Nome completo <span>*</span></label>
-              <input class="campo-entrada" id="nome" type="text" placeholder="Nome da crianca" required>
+              <input class="campo-entrada" id="nome" type="text" placeholder="Digite o nome completo" required>
             </div>
 
             <div class="campo-grupo">
@@ -80,8 +75,8 @@
             </div>
 
             <div class="campo-grupo largura-total">
-              <label class="campo-etiqueta" for="obs">Observacoes clinicas</label>
-              <textarea class="campo-area-texto" id="obs" rows="4" placeholder="Dificuldades identificadas..."></textarea>
+              <label class="campo-etiqueta" for="obs">Observações:</label>
+              <textarea class="campo-area-texto" id="obs" rows="4"></textarea>
             </div>
           </div>
         </div>
@@ -90,21 +85,21 @@
       <div class="cartao">
         <div class="cartao-topo">
           <div>
-            <h2 class="cartao-titulo">Responsavel e acesso</h2>
-            <p class="cartao-subtitulo">Dados usados para contato e entrada no aplicativo.</p>
+            <h2 class="cartao-titulo">Responsável:</h2>
+            <p class="cartao-subtitulo">Dados usados para contato.</p>
           </div>
         </div>
 
         <div class="cartao-corpo">
           <div class="grade-formulario">
             <div class="campo-grupo">
-              <label class="campo-etiqueta" for="nomeResp">Responsavel <span>*</span></label>
-              <input class="campo-entrada" id="nomeResp" type="text" placeholder="Nome do responsavel" required>
+              <label class="campo-etiqueta" for="nomeResp">Nome do responsável:<span>*</span></label>
+              <input class="campo-entrada" id="nomeResp" type="text" placeholder="Nome" required>
             </div>
 
             <div class="campo-grupo">
               <label class="campo-etiqueta" for="telefone">Telefone</label>
-              <input class="campo-entrada" id="telefone" type="tel" inputmode="numeric" maxlength="15" placeholder="(00) 00000-0000">
+              <input class="campo-entrada" id="telefone" type="tel" inputmode="numeric" maxlength="15">
             </div>
 
             <div class="campo-grupo">
@@ -124,13 +119,13 @@
 
       <div class="acoes-formulario">
         <a href="dashboard.html" class="botao-secundario">Cancelar</a>
-        <button class="botao-primario" type="button" onclick="irParaStep2()">Proximo - Exercicios</button>
+        <button class="botao-primario" type="button" onclick="irParaStep2()">Próximo</button>
       </div>
     </section>
 
     <section id="page-step2" class="pagina-etapa">
       <header class="pagina-cabecalho">
-        <h1 class="titulo-pagina">Exercicios para <span id="nome-paciente-step2">paciente</span></h1>
+        <h1 class="titulo-pagina">Exercícios<span id="nome-paciente-step2">paciente</span></h1>
         <p class="subtitulo-pagina">Escolha os exercicios que serao prescritos.</p>
       </header>
 

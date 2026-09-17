@@ -1,13 +1,8 @@
-/* ─────────────────────────────────────────────────── */
-/* MASCOTE FLUTUANTE — Girafa Liri                     */
-/* Fica fixo no canto da tela em todas as páginas       */
-/* ─────────────────────────────────────────────────── */
-
 .mascote-liri {
   position: fixed;
   right: 22px;
   bottom: 22px;
-  z-index: 999;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -41,13 +36,11 @@
   transform: scale(0.95) rotate(4deg);
 }
 
-/* Flutuação suave contínua */
 @keyframes mascote-flutuar {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-10px); }
+  50% { transform: translateY(-10px); }
 }
 
-/* Balão de fala */
 .mascote-balao {
   max-width: 220px;
   background: var(--branco, #fff);
@@ -85,16 +78,17 @@
   transform: rotate(45deg);
 }
 
-/* Em telas pequenas, mascote um pouco menor pra não atrapalhar */
 @media (max-width: 600px) {
   .mascote-liri-img {
     width: 58px;
     height: 58px;
   }
+
   .mascote-liri {
     right: 14px;
     bottom: 14px;
   }
+
   .mascote-balao {
     max-width: 170px;
     font-size: 0.8rem;

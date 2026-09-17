@@ -57,7 +57,7 @@
       Pacientes - Atenção
     </button>
     <button class="menu-item" onclick="mostrarPagina('volume', this)">
-      Volume de Atendimentos
+      Volume de Práticas
     </button>
     <button class="menu-item" onclick="mostrarPagina('configuracoes', this)">
       Configurações
@@ -89,7 +89,7 @@
             <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z"/>
             </svg>
-            <input class="search-input" type="text" placeholder="Buscar paciente..." id="busca-paciente">
+            <input class="search-input" type="text" placeholder="Buscar paciente" id="busca-paciente">
           </div>
         </div>
         <div class="tbl-wrap">
@@ -105,29 +105,13 @@
             <tbody id="tabela-pacientes">
               <tr>
                 <td colspan="5" style="text-align:center;color:#9ca3af;padding:32px">
-                  Nenhum paciente vinculado ainda. 
+                  -----
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-        <div class="panel-head">
-          <span class="panel-title">Atividades Recentes</span>
-        </div>
-        <div class="panel-body" id="atividades-recentes">
-          <div class="act-item">
-            <div class="act-avatar">
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <div class="act-info">
-              <div class="act-name">Carregando atividades…</div>
-              <div class="act-desc">Aguarde um momento.</div>
-            </div>
-          </div>
-        </div>
     </div><!-- /page-pacientes -->
 
     <!-- PÁGINA: PACIENTES - ATENÇÃO -->
@@ -152,24 +136,14 @@
           </div>
         </div>
       </div>
-
-      <!-- ──────────  ÁUDIOS RECENTES  ────────── -->
-      <div class="panel">
-        <div class="panel-head">
-          <span class="panel-title">🎤 Áudios recentes dos pacientes</span>
-          <span class="panel-sub" id="contador-audios-dashboard">0 áudios</span>
-        </div>
-        <div class="panel-body" id="audios-recentes-dashboard">
-          <div class="grafico-loading">Carregando áudios…</div>
-        </div>
-      </div>
+      
     </div><!-- /page-atencao -->
 
     <!-- PÁGINA: VOLUME DE ATENDIMENTOS -->
     <div class="page" id="page-volume">
       <div class="pg-head">
         <div>
-          <h1 class="pg-title">Volume de Atendimentos</h1>
+          <h1 class="pg-title">Volume de Práticas</h1>
         </div>
       </div>
 
@@ -194,7 +168,7 @@
 
       <div class="panel">
         <div class="panel-head">
-          <span class="panel-title">Volume de atendimentos por período</span>
+          <span class="panel-title">Atividades Realizadas</span>
           <select id="filtro-granularidade-volume" class="select-periodo-mini">
             <option value="dia" selected>Por dia (últimos 30 dias)</option>
             <option value="semana">Por semana (últimas 12 semanas)</option>

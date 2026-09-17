@@ -1,5 +1,5 @@
 :root {
-    --roxo: #7a08af;
+    --roxo: #450c5fda;
     --roxo-escuro: #510077da;
     --roxo-medio: #7c3aed;
     --roxo-claro: #a855f7;
@@ -12,7 +12,7 @@
     --cinza-100: #f3f4f6;
     --cinza-200: #e5e7eb;
     --cinza-400: #9ca3af;
-    --cinza-600: #4b5563;
+    --cinza-600: #2d3136;
     --cinza-900: #111827;
 
     --verde-bg: #dcfce7;
@@ -169,7 +169,7 @@ nav a.btn:hover {
     width: 240px;
     text-align: left;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    border-top: 4px solid var(--roxo-escuro)
+    border-top: 4px solid var(--roxo-escuro);
 }
 
 .item-recurso h3 {
@@ -430,10 +430,14 @@ hr {
     color: rgba(255, 255, 255, .3);
 }
 
+/* =========================================================
+   QUEM SOMOS
+   ========================================================= */
+
 /* ── Quem Somos─────────────────────────────── */
 .destaque-quem-somos {
   padding: 80px 68px;
-  background: linear-gradient(135deg, var(--roxo-suave) 0%, var(--roxo-bg) 70%);
+  background: var(--cinza-200);
   text-align: center;
 }
 
@@ -456,93 +460,257 @@ hr {
   font-size: .99rem; 
 }
 
-/* ──Quem somos -  História ─────────────────────────────── */
+
+/* ── Nossa História ─────────────────────────────── */
 .secao-historia {
   display: grid;
-  grid-template-columns: 0.8fr 1fr;
-  gap: 60px;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1fr);
   align-items: center;
+  gap: 60px;
   padding: 80px 68px;
   background: var(--branco);
 }
 
 .secao-historia img {
-  width: 100%; 
-  border-radius: var(--raio-lg);
-  box-shadow: 0 5px 40px -8px ;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border-radius: 22px;
+  object-fit: cover;
+  box-shadow: 0 10px 35px rgba(81, 0, 119, 0.15);
+}
+
+.secao-historia > div {
+  max-width: 700px;
 }
 
 .secao-historia div h2 {
-  font-size: 1.5rem; 
+  margin: 0 0 20px;
+  font-size: 2rem;
   font-weight: 700;
-  color: var(--cinza-900); 
-  margin-bottom: 16px;
+  color: var(--roxo-escuro);
 }
 
 .secao-historia div p {
-  color: var(--cinza-900); 
+  margin: 0 0 16px;
+  color: var(--cinza-600);
+  font-size: 1rem;
   line-height: 1.75;
-  margin-bottom: 14px; 
-  font-size: .93rem;
 }
 
-/* ── Quem somos - Valores ─────────────────────────────── */
-.secao-valores {
-  padding: 60px 68px;
+.secao-historia div p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Nossos Valores ─────────────────────────────── */
+/* A página Quem Somos usa .secao-recursos. */
+.secao-historia + .secao-recursos {
+  padding: 75px 68px;
+  text-align: center;
+  background: var(--roxo-bg);
+}
+
+.secao-historia + .secao-recursos > h2 {
+  margin: 0 0 12px;
+  font-size: 2rem;
+  color: var(--roxo-escuro);
+}
+
+.secao-historia + .secao-recursos > p {
+  max-width: 720px;
+  margin: 0 auto 40px;
+  color: var(--cinza-600);
+  line-height: 1.6;
+}
+
+.secao-historia + .secao-recursos .lista-recursos {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.secao-historia + .secao-recursos .item-recurso {
+  width: auto;
+  min-height: 180px;
+  padding: 28px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  background: var(--branco);
+  border: 1px solid var(--roxo-borda);
+  border-top: 4px solid var(--roxo-medio);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(81, 0, 119, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.secao-historia + .secao-recursos .item-recurso:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(81, 0, 119, 0.14);
+}
+
+.secao-historia + .secao-recursos .item-recurso h3 {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  color: var(--roxo-escuro);
+}
+
+.secao-historia + .secao-recursos .item-recurso p {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--cinza-600);
+}
+
+/* ── Por que uma girafa? ─────────────────────────── */
+.secao-mascote {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.75fr);
+  align-items: center;
+  gap: 70px;
+  padding: 80px 68px;
+  background: var(--branco);
+}
+
+.secao-mascote > div:first-child {
+  max-width: 700px;
+}
+
+.secao-mascote h2 {
+  margin: 0 0 20px;
+  font-size: 2rem;
+  color: var(--roxo-escuro);
+}
+
+.secao-mascote p {
+  margin: 0 0 18px;
+  color: var(--cinza-600);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.secao-mascote p:last-child {
+  margin-bottom: 0;
+}
+
+.mascote-imagem-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
-/* ── Quem somos - Equipe ─────────────────────────────── */
+.mascote-imagem-circulo {
+  width: 300px;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--roxo-suave);
+  border: 1px solid var(--roxo-borda);
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 10px 35px rgba(81, 0, 119, 0.12);
+}
+
+.mascote-imagem-circulo img {
+  width: 90%;
+  height: 90%;
+  object-fit: contain;
+  display: block;
+}
+
+.mascote-curiosidade {
+  max-width: 360px;
+  margin-top: 20px !important;
+  padding: 15px 18px;
+  background: var(--roxo-bg);
+  border: 1px solid var(--roxo-borda);
+  border-radius: 14px;
+  font-size: 0.9rem !important;
+  line-height: 1.55 !important;
+}
+
+.mascote-curiosidade strong {
+  color: var(--roxo-escuro);
+}
+
+/* ── Nossa Equipe ───────────────────────────────── */
 .secao-equipe {
-  padding: 60px 68px;
+  padding: 75px 68px;
   text-align: center;
+  background: var(--roxo-bg);
+}
+
+.secao-equipe h2 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--roxo-escuro);
 }
 
 .grade-equipe {
+  max-width: 900px;
+  margin: 40px auto 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 22px;
-  margin-top: 40px;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 25px;
 }
 
 .grade-equipe > div {
+  min-width: 0;
   text-align: center;
   background: var(--branco);
-  border-radius: var(--raio-lg);
-  padding: 26px 16px;
+  border-radius: 18px;
+  padding: 24px 15px;
   border: 1px solid var(--roxo-borda);
   box-shadow: var(--sombra-leve);
   transition: transform var(--transicao), box-shadow var(--transicao);
 }
 
-.grade-equipe > div:hover { 
-  transform: translateY(-5px); 
-  box-shadow: var(--sombra-media); 
+.grade-equipe > div:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--sombra-media);
 }
 
-/* Avatar com imagem */
+.grade-equipe > div > a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .avatar {
-  width: 90px; 
-  height: 90px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  margin: 0 auto 12px;
-  overflow: hidden; /* faz a imagem virar círculo */
+  margin: 0 auto 15px;
+  overflow: hidden;
   position: relative;
+  border: 3px solid var(--roxo-borda);
 }
 
-/* Imagem dentro do avatar */
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
+  transition: transform 0.25s ease;
 }
 
-/* Hover com efeito suave */
+.grade-equipe > div:hover .avatar img {
+  transform: scale(1.06);
+}
+
 .avatar::after {
   content: "LinkedIn";
   position: absolute;
   inset: 0;
-  background: rgba(124, 58, 237, 0.281);
+  background: rgba(124, 58, 237, 0.28);
   color: white;
   font-size: 10px;
   font-weight: bold;
@@ -554,20 +722,152 @@ hr {
   transition: var(--transicao);
 }
 
-/* Mostra no hover */
 .grade-equipe > div:hover .avatar::after {
   opacity: 1;
 }
 
 .grade-equipe p {
-  font-size: .90rem; 
-  font-weight: 600; 
-  color: var(--cinza-900);
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--roxo-escuro);
 }
 
-/* Remove o sublinhado de todos os links */
+/* Mantém os links sem sublinhado. */
 a {
-    text-decoration: none;
+  text-decoration: none;
+}
+
+/* ── Rodapé da página ───────────────────────────── */
+.rodape-coluna h4 {
+  margin-top: 0;
+}
+
+/* ── Responsividade específica da página Quem Somos ── */
+@media (max-width: 960px) {
+  .secao-historia {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 60px 24px;
+  }
+
+  .secao-historia img {
+    max-width: 600px;
+  }
+
+  .secao-historia + .secao-recursos {
+    padding: 60px 24px;
+  }
+
+  .secao-historia + .secao-recursos .lista-recursos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .secao-mascote {
+    grid-template-columns: 1fr;
+    gap: 45px;
+    padding: 60px 24px;
+  }
+
+  .secao-mascote > div:first-child {
+    max-width: 100%;
+  }
+
+  .mascote-imagem-circulo {
+    width: 270px;
+    height: 270px;
+  }
+
+  .secao-equipe {
+    padding: 60px 24px;
+  }
+
+  .grade-equipe {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    max-width: 650px;
+  }
+}
+
+@media (max-width: 600px) {
+  .destaque-quem-somos {
+    padding: 55px 20px;
+  }
+
+  .destaque-quem-somos h2 {
+    font-size: 2rem;
+  }
+
+  .destaque-quem-somos p {
+    font-size: 0.95rem;
+  }
+
+  .secao-historia {
+    padding: 50px 20px;
+    gap: 30px;
+  }
+
+  .secao-historia h2,
+  .secao-mascote h2,
+  .secao-equipe h2,
+  .secao-historia + .secao-recursos > h2 {
+    font-size: 1.7rem;
+  }
+
+  .secao-historia p,
+  .secao-mascote p {
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .secao-historia + .secao-recursos {
+    padding: 50px 20px;
+  }
+
+  .secao-historia + .secao-recursos .lista-recursos {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .secao-historia + .secao-recursos .item-recurso {
+    min-height: auto;
+    padding: 24px 20px;
+  }
+
+  .secao-mascote {
+    padding: 50px 20px;
+  }
+
+  .mascote-imagem-circulo {
+    width: 230px;
+    height: 230px;
+  }
+
+  .mascote-curiosidade {
+    max-width: 100%;
+  }
+
+  .secao-equipe {
+    padding: 50px 20px;
+  }
+
+  .grade-equipe {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    gap: 15px;
+    margin-top: 30px;
+  }
+
+  .grade-equipe > div {
+    padding: 20px 10px;
+  }
+
+  .grade-equipe .avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .grade-equipe p {
+    font-size: 0.85rem;
+  }
 }
 
 /* ── Seção de Login ─────────────────────────────── */
@@ -579,12 +879,12 @@ a {
 }
 
 .cartao-login {
-    background: #fff;
+    background: #ba9fbb9d;
     padding: 35px;
     border-radius: 14px;
     width: 100%;
     max-width: 400px;
-    box-shadow: 0 10px 25px rgba(140, 63, 175, 0.15);
+    box-shadow: 0 10px 25px rgba(129, 47, 167, 0.15);
     text-align: center;
     border-top: 1px solid #8c3faf;
 }
@@ -597,7 +897,7 @@ a {
 /* Subtítulo */
 .subtitulo {
     font-size: 14px;
-    color: #666;
+    color: #1f1e1e;
     margin-bottom: 25px;
 }
 
@@ -609,7 +909,7 @@ a {
 
 .grupo-input label {
     font-size: 13px;
-    color: #444;
+    color: #0e0d0d;
 }
 
 .grupo-input input {
@@ -643,7 +943,7 @@ a {
 
 .botao-entrar:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(140, 63, 175, 0.4);
+    box-shadow: 0 5px 15px rgba(51, 8, 71, 0.4);
 }
 
 /* Links abaixo do formulário */
@@ -654,7 +954,7 @@ a {
 
 .links-rodape a {
     text-decoration: none;
-    color: #8c3faf;
+    color: #4e1966;
     font-weight: 500;
 }
 
@@ -668,17 +968,6 @@ a {
     justify-content: center;
     align-items: center;
     padding: 80px 20px;
-}
-
-.cartao-cadastro {
-    background: #fff;
-    padding: 35px;
-    border-radius: 14px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 10px 25px rgba(140, 63, 180, 0.15);
-    text-align: center;
-    border-top: 1px solid #8c3faf;
 }
 
 .cartao-cadastro h2 {
@@ -850,8 +1139,8 @@ a {
    ──────────────────────────────────────────────────────────── */
 .aviso-obrigatorios {
     background: #fef2f2;
-    border-left: 3px solid #dc2626;
-    color: #7f1d1d;
+    border-left: 3px solid #b41818;
+    color: #350d0d;
     padding: 10px 14px;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -860,7 +1149,7 @@ a {
 }
 
 .obrigatorio {
-    color: #dc2626;
+    color: #cf1b1b;
     font-weight: 700;
     margin-left: 2px;
 }
@@ -868,7 +1157,7 @@ a {
 .grupo-input .dica-campo {
     display: block;
     font-size: 12px;
-    color: #6b7280;
+    color: #2d2f33;
     margin-top: 2px;
     margin-bottom: 4px;
     font-style: italic;
@@ -961,3 +1250,36 @@ a {
 .rodape-coluna h4 {
   margin-top: 0;
 }
+
+.campo-senha {
+    position: relative;
+    width: 100%;
+}
+
+.grupo-input input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    outline: none;
+    transition: 0.3s;
+}
+
+.campo-senha input {
+    padding-right: 45px;
+}
+
+.campo-senha button {
+    position: absolute;
+    right: 10px;
+    top: calc(50% + 2px);
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    padding: 4px;
+    cursor: pointer;
+    opacity: 0.45;
+}
+

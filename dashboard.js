@@ -392,7 +392,14 @@ function renderGraficoVolume() {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(hoje);
       d.setDate(d.getDate() - i);
-      buckets.push({ inicio: d, label: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }), total: 0 });
+      buckets.push({
+        inicio: d,
+        label: d.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit"
+        }),
+        total: 0
+      });
     }
   } else if (granularidade === "semana") {
     const diaSemana = hoje.getDay();
@@ -403,38 +410,65 @@ function renderGraficoVolume() {
     for (let i = 11; i >= 0; i--) {
       const d = new Date(inicioSemanaAtual);
       d.setDate(d.getDate() - i * 7);
+
       const fim = new Date(d);
       fim.setDate(fim.getDate() + 6);
+
       const fimReal = fim > hoje ? hoje : fim;
+
       buckets.push({
         inicio: d,
-        label: `${d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}-${fimReal.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}`,
+        label: `${d.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit"
+        })}-${fimReal.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit"
+        })}`,
         total: 0
       });
     }
   } else {
     for (let i = 11; i >= 0; i--) {
-      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
-      buckets.push({ inicio: d, label: d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" }), total: 0 });
+      const d = new Date(
+        hoje.getFullYear(),
+        hoje.getMonth() - i,
+        1
+      );
+
+      buckets.push({
+        inicio: d,
+        label: d.toLocaleDateString("pt-BR", {
+          month: "short",
+          year: "2-digit"
+        }),
+        total: 0
+      });
     }
   }
 
   cacheProgressosVolume.forEach(p => {
     const data = pegarData(p.concluido_em);
     if (!data) return;
+
     data.setHours(0, 0, 0, 0);
 
     if (granularidade === "mes") {
       const idx = buckets.findIndex(b =>
-        b.inicio.getFullYear() === data.getFullYear() && b.inicio.getMonth() === data.getMonth()
+        b.inicio.getFullYear() === data.getFullYear() &&
+        b.inicio.getMonth() === data.getMonth()
       );
+
       if (idx !== -1) buckets[idx].total++;
     } else {
       const tamanhoDias = granularidade === "semana" ? 7 : 1;
+
       for (let i = 0; i < buckets.length; i++) {
         const inicioB = buckets[i].inicio;
         const fimB = new Date(inicioB);
+
         fimB.setDate(fimB.getDate() + tamanhoDias);
+
         if (data >= inicioB && data < fimB) {
           buckets[i].total++;
           break;
@@ -446,6 +480,7 @@ function renderGraficoVolume() {
   if (chartVolumeAtendimentos) chartVolumeAtendimentos.destroy();
 
   const ctx = canvas.getContext("2d");
+
   chartVolumeAtendimentos = new Chart(ctx, {
     type: "line",
     data: {
@@ -465,17 +500,36 @@ function renderGraficoVolume() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
       scales: {
-        y: { beginAtZero: true, ticks: { precision: 0 } },
-        x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } }
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        },
+        x: {
+          grid: {
+            display: false
+          },
+          ticks: {
+            maxTicksLimit: 12
+          }
+        }
       }
     }
   });
 }
 
-document.getElementById("filtro-periodo-novos-pacientes")?.addEventListener("change", atualizarNovosPacientes);
-document.getElementById("filtro-granularidade-volume")?.addEventListener("change", renderGraficoVolume);
+document.getElementById("filtro-periodo-novos-pacientes")
+  ?.addEventListener("change", atualizarNovosPacientes);
+
+document.getElementById("filtro-granularidade-volume")
+  ?.addEventListener("change", renderGraficoVolume);
 
 // ── Proteção da página + carregamento inicial ───────────────────────────────
 onAuthStateChanged(auth, async (usuario) => {
@@ -485,23 +539,30 @@ onAuthStateChanged(auth, async (usuario) => {
   }
 
   const docSnap = await getDoc(doc(db, "profissionais", usuario.uid));
+
   if (!docSnap.exists()) {
     window.location.href = "completar-cadastro.html";
     return;
   }
 
   const nome = usuario.displayName || "Profissional";
+
   const elTopbarNome = document.getElementById("topbar-nome");
   if (elTopbarNome) elTopbarNome.textContent = nome;
+
   const elTituloBoasVindas = document.getElementById("titulo-boas-vindas");
-  if (elTituloBoasVindas) elTituloBoasVindas.textContent = `Olá, ${nome.split(" ")[0]}!`;
+  if (elTituloBoasVindas) {
+    elTituloBoasVindas.textContent = `Olá, ${nome.split(" ")[0]}!`;
+  }
 
   // Preenche os campos de configuração
   const d = docSnap.data();
+
   const setIfExists = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.value = val || "";
   };
+
   setIfExists("cfg-nome", d.nome);
   setIfExists("cfg-email", d.email);
   setIfExists("cfg-crfa", d.crfa);
@@ -521,7 +582,9 @@ onAuthStateChanged(auth, async (usuario) => {
     where("profissional_id", "==", usuario.uid),
     where("tipo", "==", "paciente")
   );
+
   const snap = await getDocs(q);
+
   const elTotalPacientes = document.getElementById("total-pacientes");
   if (elTotalPacientes) elTotalPacientes.textContent = snap.size;
 
@@ -529,36 +592,74 @@ onAuthStateChanged(auth, async (usuario) => {
   if (!tbody) return;
 
   if (snap.empty) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">
-      Nenhum paciente cadastrado.
-    </td></tr>`;
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">
+          Nenhum paciente cadastrado.
+        </td>
+      </tr>`;
     return;
   }
 
   tbody.innerHTML = "";
+
   snap.forEach(p => {
     const dados = p.data();
     const idade = calcularIdade(dados.data_nascimento);
+
     const tr = document.createElement("tr");
+
     tr.style.cursor = "pointer";
+
     tr.onclick = () => {
       window.location.href = `ficha-paciente.html?id=${p.id}`;
     };
+
     tr.innerHTML = `
       <td>${dados.nome || "—"}</td>
       <td>${idade !== null ? idade + " anos" : "—"}</td>
       <td>${dados.responsavel || "—"}</td>
       <td><span class="badge-ativo">Ativo</span></td>`;
+
     tbody.appendChild(tr);
   });
 });
 
-// Busca de paciente
+// Busca de paciente pelo primeiro nome do paciente
+// ou pelo primeiro nome do responsável
 document.getElementById("busca-paciente")?.addEventListener("input", (e) => {
-  const termo = e.target.value.toLowerCase();
+  const termo = e.target.value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
   document.querySelectorAll("#tabela-pacientes tr").forEach(tr => {
-    const texto = tr.textContent.toLowerCase();
-    tr.style.display = texto.includes(termo) ? "" : "none";
+
+    const colunas = tr.querySelectorAll("td");
+
+    // Ignora linhas que não sejam pacientes
+    if (colunas.length < 4) return;
+
+    const nomePaciente = colunas[0].textContent
+      .trim()
+      .split(/\s+/)[0]
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    const nomeResponsavel = colunas[2].textContent
+      .trim()
+      .split(/\s+/)[0]
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    const encontrou =
+      nomePaciente.includes(termo) ||
+      nomeResponsavel.includes(termo);
+
+    tr.style.display = encontrou ? "" : "none";
   });
 });
 

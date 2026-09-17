@@ -12,6 +12,21 @@ const btnEntrar = document.getElementById("btn-entrar");
 const btnGoogle = document.getElementById("btn-google");
 const mensagemErro = document.getElementById("mensagem-erro");
 
+const senha = document.getElementById("senha");
+const mostrarSenha = document.getElementById("mostrar-senha");
+
+mostrarSenha.addEventListener("click", () => {
+  if (senha.type === "password") {
+    senha.type = "text";
+    mostrarSenha.textContent = "🔓";
+    mostrarSenha.setAttribute("aria-label", "Ocultar senha");
+  } else {
+    senha.type = "password";
+    mostrarSenha.textContent = "🔒";
+    mostrarSenha.setAttribute("aria-label", "Mostrar senha");
+  }
+});
+
 // Tradução dos erros do Firebase para português
 function traduzirErro(codigo) {
   const erros = {

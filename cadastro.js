@@ -1,7 +1,7 @@
 import { auth, db } from "./firebase.js";
 import { createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 import {
-  doc, setDoc, getDocs, collection, query, where, Timestamp
+  doc, setDoc, Timestamp
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 import { entrarComGoogle } from "./google-auth.js";
 
@@ -16,6 +16,7 @@ function traduzirErro(codigo) {
     "auth/email-already-in-use": "Este e-mail já está cadastrado.",
     "auth/invalid-email": "E-mail inválido.",
     "auth/weak-password": "A senha deve ter pelo menos 6 caracteres.",
+    "permission-denied": "Sem permissão para concluir o cadastro. Tente novamente.",
   };
   return erros[codigo] || "Ocorreu um erro. Tente novamente.";
 }
@@ -118,28 +119,16 @@ form.addEventListener("submit", async (e) => {
     return;
   }
 
-  btnCadastrar.textContent = "Verificando dados...";
+  btnCadastrar.textContent = "Cadastrando...";
   btnCadastrar.disabled = true;
 
   try {
-    // ── 0. VALIDA SE O CPF JÁ ESTÁ EM USO ────────────────────────
-    // Cada CPF só pode ter UMA conta no sistema.
-    const qCpf = query(
-      collection(db, "profissionais"),
-      where("cpf", "==", cpf)
-    );
-    const snapCpf = await getDocs(qCpf);
-    if (!snapCpf.empty) {
-      marcarErro("cpf");
-      mostrarErro(
-        "Este CPF já está cadastrado. Faça login ou recupere sua senha."
-      );
-      btnCadastrar.textContent = "Cadastrar";
-      btnCadastrar.disabled = false;
-      return;
-    }
-
-    btnCadastrar.textContent = "Cadastrando...";
+    // NOTA: a checagem de CPF duplicado ANTES do login foi removida —
+    // as regras do Firestore (corretamente) não permitem listar a
+    // coleção "profissionais" sem estar autenticado, então essa consulta
+    // sempre retornava "permission-denied" e travava o cadastro para
+    // todo mundo. O e-mail duplicado já é bloqueado pelo próprio
+    // Firebase Authentication (erro "auth/email-already-in-use" abaixo).
 
     // 1. Cria o usuário no Firebase Authentication
     const credencial = await createUserWithEmailAndPassword(auth, email, senha);
@@ -149,13 +138,15 @@ form.addEventListener("submit", async (e) => {
     await updateProfile(usuario, { displayName: nome });
 
     // 3. Salva os dados extras no Firestore
+    // (a partir daqui o usuário já está autenticado, então
+    // "allow create: if logado() && request.auth.uid == uid" passa)
     await setDoc(doc(db, "profissionais", usuario.uid), {
       nome,
       email,
       cpf,
       telefone,
       crfa,
-      criadoEm: new Date().toISOString()
+      criadoEm: Timestamp.now()
     });
 
     // 4. Sucesso → redireciona para o login
@@ -166,6 +157,7 @@ form.addEventListener("submit", async (e) => {
     }, 2000);
 
   } catch (erro) {
+    console.error("Erro no cadastro:", erro.code, erro.message);
     mostrarErro(traduzirErro(erro.code));
     btnCadastrar.textContent = "Cadastrar";
     btnCadastrar.disabled = false;
@@ -193,6 +185,7 @@ btnGoogle.addEventListener("click", async () => {
     `;
   });
 });
+
 // ── UX: quando o usuário começa a digitar num campo marcado em vermelho,
 //        a borda vermelha some automaticamente
 document.querySelectorAll(".grupo-input input").forEach(input => {
