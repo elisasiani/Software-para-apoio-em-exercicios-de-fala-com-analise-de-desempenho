@@ -5,7 +5,7 @@
 // Mostra:
 //   - Card grande de pontuação total (gamificação)
 //   - Stats: exercícios feitos, palavras únicas, dias praticando
-//   - Gráfico de barras: atividade dos últimos 7 dias
+//   - Gráfico de barras: atividade da semana atual (dom–sáb)
 //   - Conquistas/medalhas desbloqueadas
 //   - Histórico recente
 //
@@ -18,6 +18,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../services/firestore_service.dart';
+import '../utils/liri_utils.dart';
 import 'access_screen.dart';
 
 class RelatoriosScreen extends StatelessWidget {
@@ -186,6 +188,19 @@ class RelatoriosScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            FutureBuilder(
+              future: FirestoreService.instance.getDadosPaciente(pacienteId),
+              builder: (context, snap) {
+                final nome = (snap.data?['nome'] as String?) ?? 'Paciente';
+                return ListTile(
+                  leading: const Icon(Icons.person, color: Color(0xFF7B2FBE)),
+                  title: Text(nome,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('Paciente · login: ${loginAtual()}'),
+                );
+              },
+            ),
+            const Divider(),
             ListTile(
               leading: const Icon(Icons.logout, color: Color(0xFF7B2FBE)),
               title: const Text('Sair'),
@@ -209,6 +224,7 @@ class RelatoriosScreen extends StatelessWidget {
 
   // ── HEADER (igual ao da Home, para consistência visual) ─────────────
   Widget _buildHeader() {
+    final login = loginAtual();
     return SizedBox(
       height: 120,
       child: Stack(
@@ -223,34 +239,52 @@ class RelatoriosScreen extends StatelessWidget {
               fit: BoxFit.fitHeight,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 150, 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 150, 0),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Seu progresso',
-                    style: TextStyle(
-                      fontFamily: 'LeagueSpartan',
-                      color: Color(0xFF7B2FBE),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Text(
-                    'Veja como você está indo!',
-                    style: TextStyle(
-                      fontFamily: 'LeagueSpartan',
-                      color: Color(0xFF7B2FBE),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                      height: 1.1,
-                    ),
-                  ),
-                ],
+              child: FutureBuilder(
+                future: FirestoreService.instance.getDadosPaciente(pacienteId),
+                builder: (context, snap) {
+                  final nome =
+                      ((snap.data?['nome'] as String?) ?? '').split(' ').first;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        nome.isEmpty ? 'Seu progresso' : 'Seu progresso, $nome',
+                        style: const TextStyle(
+                          fontFamily: 'LeagueSpartan',
+                          color: Color(0xFF7B2FBE),
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Text(
+                        'Veja como você está indo!',
+                        style: TextStyle(
+                          fontFamily: 'LeagueSpartan',
+                          color: Color(0xFF7B2FBE),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                          height: 1.1,
+                        ),
+                      ),
+                      if (login.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Login: $login',
+                          style: TextStyle(
+                            fontFamily: 'LeagueSpartan',
+                            color: const Color(0xFF7B2FBE).withOpacity(0.7),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ),
           ),
@@ -307,8 +341,8 @@ class RelatoriosScreen extends StatelessWidget {
     };
     final palavraComMaisAcertos = <String, int>{};
     final hoje = DateTime.now();
-    final inicio7dias =
-        DateTime(hoje.year, hoje.month, hoje.day).subtract(const Duration(days: 6));
+    // Semana atual (domingo → sábado): a mesma da "Sua Sequência" na Home
+    final inicioSemana = inicioDaSemana(hoje);
 
     for (final d in docs) {
       final dados = d.data() as Map<String, dynamic>;
@@ -330,8 +364,8 @@ class RelatoriosScreen extends StatelessWidget {
             '${data.year}-${data.month.toString().padLeft(2, '0')}-${data.day.toString().padLeft(2, '0')}';
         diasUnicos.add(chave);
 
-        if (!data.isBefore(inicio7dias)) {
-          // 0 = dom, 1 = seg, … 6 = sáb (igual ao streak da home)
+        if (!data.isBefore(inicioSemana)) {
+          // 0 = dom, 1 = seg, … 6 = sáb (igual à sequência da home)
           final indice = data.weekday % 7;
           atividadePorDia[indice] = (atividadePorDia[indice] ?? 0) + 1;
         }
@@ -357,7 +391,7 @@ class RelatoriosScreen extends StatelessWidget {
           diasAtivo: diasUnicos.length,
         ),
         const SizedBox(height: 24),
-        _historicoRecente(docs),
+        _historicoRecente(docs, dificuldades),
       ],
     );
   }
@@ -523,7 +557,16 @@ class RelatoriosScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 2),
+          Text(
+            _textoSemanaAtual(),
+            style: TextStyle(
+              fontFamily: 'LeagueSpartan',
+              color: const Color(0xFF7B2FBE).withOpacity(0.7),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 14),
           SizedBox(
             height: 160,
             child: Row(
@@ -601,6 +644,15 @@ class RelatoriosScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Ex.: "12/10 a 18/10 · recomeça todo domingo"
+  String _textoSemanaAtual() {
+    final ini = inicioDaSemana(DateTime.now());
+    final fim = DateTime(ini.year, ini.month, ini.day + 6);
+    String f(DateTime d) =>
+        '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+    return '${f(ini)} a ${f(fim)} · recomeça todo domingo';
   }
 
   // ── CONQUISTAS / MEDALHAS ──────────────────────────────────────────
@@ -764,7 +816,8 @@ class RelatoriosScreen extends StatelessWidget {
   }
 
   // ── HISTÓRICO RECENTE ──────────────────────────────────────────────
-  Widget _historicoRecente(List<QueryDocumentSnapshot> docs) {
+  Widget _historicoRecente(
+      List<QueryDocumentSnapshot> docs, Map<String, String> dificuldades) {
     // Ordena por data desc
     final ordenados = [...docs];
     ordenados.sort((a, b) {
@@ -810,7 +863,14 @@ class RelatoriosScreen extends StatelessWidget {
             final dados = d.data() as Map<String, dynamic>;
             final palavra = dados['palavraAlvo'] as String? ?? '—';
             final ts = dados['concluido_em'];
-            final quando = ts is Timestamp ? _tempoRelativo(ts.toDate()) : '—';
+            final data = ts is Timestamp ? ts.toDate() : null;
+            final quando = data != null
+                ? '${_tempoRelativo(data)} · ${_dataHora(data)}'
+                : '—';
+            final dif =
+                dificuldades[dados['prescricao_id'] as String? ?? ''] ??
+                    'fácil';
+            final tentativa = (dados['tentativas'] as num?)?.toInt();
 
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
@@ -820,8 +880,12 @@ class RelatoriosScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('🎤', style: TextStyle(fontSize: 18)),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 2),
+                    child: Text('🎤', style: TextStyle(fontSize: 18)),
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -843,6 +907,24 @@ class RelatoriosScreen extends StatelessWidget {
                             fontSize: 11,
                             color: Color(0xFF7B2FBE),
                           ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            _chipInfo('${_emojiDificuldade(dif)} $dif',
+                                _corDificuldade(dif)),
+                            if (tentativa != null)
+                              _chipInfo(
+                                'Tentativa $tentativa/$kLimiteTentativas',
+                                const Color(0xFFEDE7F6),
+                              ),
+                            _chipInfo(
+                              '+${_pontosPorDificuldade(dif)} pts ⭐',
+                              const Color(0xFFFFE0B2),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -868,6 +950,50 @@ class RelatoriosScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _chipInfo(String texto, Color cor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: cor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          fontFamily: 'LeagueSpartan',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF4A148C),
+        ),
+      ),
+    );
+  }
+
+  Color _corDificuldade(String d) {
+    switch (d) {
+      case 'fácil':         return const Color(0xFFB8F07A);
+      case 'médio':         return const Color(0xFFFFC067);
+      case 'difícil':       return const Color(0xFFFFB4DF);
+      case 'personalizado': return const Color(0xFFC2B0FF);
+      default:              return const Color(0xFFB8F07A);
+    }
+  }
+
+  String _emojiDificuldade(String d) {
+    switch (d) {
+      case 'fácil':         return '🟢';
+      case 'médio':         return '🟡';
+      case 'difícil':       return '🔴';
+      case 'personalizado': return '✏️';
+      default:              return '⭐';
+    }
+  }
+
+  /// "17/10 às 15:42"
+  String _dataHora(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')} '
+      'às ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
   String _tempoRelativo(DateTime data) {
     final diff = DateTime.now().difference(data);

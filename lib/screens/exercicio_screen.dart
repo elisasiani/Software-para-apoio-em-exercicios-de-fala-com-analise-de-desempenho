@@ -18,8 +18,9 @@ import '../models/exercicio.dart';
 import '../models/user_progress.dart';
 import '../services/audio_service.dart';
 import '../services/firestore_service.dart';
+import '../utils/liri_utils.dart';
 
-enum EstadoGravacao { esperando, gravando, enviando, sucesso, erro }
+enum EstadoGravacao { esperando, gravando, enviando, sucesso, erro, bloqueado }
 
 class ExercicioScreen extends StatefulWidget {
   final Exercicio exercicio;
@@ -38,10 +39,14 @@ class ExercicioScreen extends StatefulWidget {
 class _ExercicioScreenState extends State<ExercicioScreen>
     with TickerProviderStateMixin {
   EstadoGravacao _estado = EstadoGravacao.esperando;
-  int _tentativas = 0;
+  // Tentativas já salvas no Firestore para esta prescrição
+  int _tentativasFeitas = 0;
+  bool _carregandoTentativas = true;
+  static const int _limiteMaximo = kLimiteTentativas;
+
   int _segundosRestantes = 10;
   Timer? _timer;
-  String? _mensagemErro; // ← NOVO: mostra o erro na tela pra debug
+  String? _mensagemErro;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -73,6 +78,30 @@ class _ExercicioScreenState extends State<ExercicioScreen>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
+
+    // Carrega do Firestore quantas tentativas já foram feitas
+    _carregarTentativasFeitas();
+  }
+
+  Future<void> _carregarTentativasFeitas() async {
+    try {
+      final count = await FirestoreService.instance.contarTentativas(
+        pacienteId:   widget.pacienteId,
+        prescricaoId: widget.exercicio.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _tentativasFeitas = count;
+        _carregandoTentativas = false;
+        if (_tentativasFeitas >= _limiteMaximo) {
+          _estado = EstadoGravacao.bloqueado;
+        }
+      });
+    } catch (e) {
+      debugPrint('[Liri] Erro ao carregar tentativas: $e');
+      if (!mounted) return;
+      setState(() => _carregandoTentativas = false);
+    }
   }
 
   @override
@@ -86,6 +115,12 @@ class _ExercicioScreenState extends State<ExercicioScreen>
 
   // ── INICIAR GRAVAÇÃO ────────────────────────────────────────────────
   Future<void> _iniciarGravacao() async {
+    // Bloqueia se já atingiu o limite
+    if (_tentativasFeitas >= _limiteMaximo) {
+      setState(() => _estado = EstadoGravacao.bloqueado);
+      return;
+    }
+
     try {
       await AudioService.instance.iniciarGravacao();
     } catch (e) {
@@ -94,11 +129,10 @@ class _ExercicioScreenState extends State<ExercicioScreen>
       return;
     }
 
-    _tentativas++;
     setState(() {
       _estado = EstadoGravacao.gravando;
       _segundosRestantes = 10;
-      _mensagemErro = null; // limpa erro anterior
+      _mensagemErro = null;
     });
 
     _pulseController.repeat(reverse: true);
@@ -160,11 +194,13 @@ class _ExercicioScreenState extends State<ExercicioScreen>
         prescricaoId:   widget.exercicio.id,
         palavraAlvo:    widget.exercicio.palavraAlvo,
         acertou:        true,
-        tentativas:     _tentativas,
+        tentativas:     _tentativasFeitas + 1,
         audioBase64:    base64,
       );
 
       if (mounted) {
+        // Incrementa o contador local após salvar com sucesso
+        _tentativasFeitas++;
         Provider.of<UserProgress>(context, listen: false)
             .completarExercicio(widget.exercicio.categoria);
         setState(() => _estado = EstadoGravacao.sucesso);
@@ -272,7 +308,10 @@ class _ExercicioScreenState extends State<ExercicioScreen>
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pop(ctx);
+                    Navigator.pop(ctx); // fecha o diálogo
+                    if (!mounted) return;
+                    // Volta sozinho para a lista, inclusive na última tentativa.
+                    // A Home mostra o exercício bloqueado ao chegar no limite.
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
@@ -484,8 +523,20 @@ class _ExercicioScreenState extends State<ExercicioScreen>
 
   // Área central com o botão de microfone (estado-dependente)
   Widget _buildAreaGravacao() {
+    // Enquanto carrega a contagem do Firestore, mostra spinner
+    if (_carregandoTentativas) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: CircularProgressIndicator(color: Color(0xFF7B2FBE)),
+      );
+    }
+
     return Column(
       children: [
+        // Dots de tentativas (X/3)
+        _buildDotsTentativas(),
+        const SizedBox(height: 16),
+
         // Indicador de gravação / contador
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -496,6 +547,7 @@ class _ExercicioScreenState extends State<ExercicioScreen>
         // Botão grande do microfone
         GestureDetector(
           onTap: () {
+            if (_estado == EstadoGravacao.bloqueado) return; // não faz nada
             if (_estado == EstadoGravacao.esperando ||
                 _estado == EstadoGravacao.erro) {
               _iniciarGravacao();
@@ -513,33 +565,35 @@ class _ExercicioScreenState extends State<ExercicioScreen>
               return Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Ondas de áudio quando gravando
                   if (_estado == EstadoGravacao.gravando) _buildOndas(),
 
                   Transform.scale(
                     scale: scale,
-                    child: Container(
-                      width: 110,
-                      height: 110,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: _coresBotao(),
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _coresBotao().first.withOpacity(0.45),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
+                    child: Opacity(
+                      opacity: _estado == EstadoGravacao.bloqueado ? 0.4 : 1.0,
+                      child: Container(
+                        width: 110,
+                        height: 110,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: _coresBotao(),
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                        ],
-                      ),
-                      child: Icon(
-                        _iconeBotao(),
-                        color: Colors.white,
-                        size: 50,
+                          boxShadow: [
+                            BoxShadow(
+                              color: _coresBotao().first.withOpacity(0.45),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          _iconeBotao(),
+                          color: Colors.white,
+                          size: 50,
+                        ),
                       ),
                     ),
                   ),
@@ -559,6 +613,50 @@ class _ExercicioScreenState extends State<ExercicioScreen>
             fontSize: 15,
             color: Color(0xFF7B2FBE),
             fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Dots X/3 mostrando quantas tentativas já foram usadas
+  Widget _buildDotsTentativas() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Tentativas: ',
+          style: TextStyle(
+            fontFamily: 'LeagueSpartan',
+            fontSize: 13,
+            color: Color(0xFF7B2FBE),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        ...List.generate(_limiteMaximo, (i) {
+          final usado = i < _tentativasFeitas;
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: usado ? const Color(0xFF7B2FBE) : Colors.transparent,
+              border: Border.all(
+                color: const Color(0xFF7B2FBE),
+                width: 2,
+              ),
+            ),
+          );
+        }),
+        const SizedBox(width: 8),
+        Text(
+          '$_tentativasFeitas/$_limiteMaximo',
+          style: const TextStyle(
+            fontFamily: 'LeagueSpartan',
+            fontSize: 13,
+            color: Color(0xFF7B2FBE),
+            fontWeight: FontWeight.bold,
           ),
         ),
       ],
@@ -725,6 +823,8 @@ class _ExercicioScreenState extends State<ExercicioScreen>
         return 'Que voz incrível! 🌟';
       case EstadoGravacao.erro:
         return 'Ué, deu um probleminha. Tenta de novo! 💪';
+      case EstadoGravacao.bloqueado:
+        return 'Você já fez as $_limiteMaximo tentativas! Sua fono vai ouvir tudo 🏆';
     }
   }
 
@@ -738,6 +838,8 @@ class _ExercicioScreenState extends State<ExercicioScreen>
         return [Colors.green.shade400, Colors.green.shade700];
       case EstadoGravacao.erro:
         return [Colors.orange.shade400, Colors.orange.shade700];
+      case EstadoGravacao.bloqueado:
+        return [Colors.grey.shade400, Colors.grey.shade600];
       default:
         return [const Color(0xFFB39DDB), const Color(0xFF7B2FBE)];
     }
@@ -745,21 +847,23 @@ class _ExercicioScreenState extends State<ExercicioScreen>
 
   IconData _iconeBotao() {
     switch (_estado) {
-      case EstadoGravacao.gravando: return Icons.stop_rounded;
-      case EstadoGravacao.enviando: return Icons.cloud_upload_rounded;
-      case EstadoGravacao.sucesso:  return Icons.check_rounded;
-      case EstadoGravacao.erro:     return Icons.refresh_rounded;
-      default:                      return Icons.mic_rounded;
+      case EstadoGravacao.gravando:   return Icons.stop_rounded;
+      case EstadoGravacao.enviando:   return Icons.cloud_upload_rounded;
+      case EstadoGravacao.sucesso:    return Icons.check_rounded;
+      case EstadoGravacao.erro:       return Icons.refresh_rounded;
+      case EstadoGravacao.bloqueado:  return Icons.lock_rounded;
+      default:                        return Icons.mic_rounded;
     }
   }
 
   String _labelBotao() {
     switch (_estado) {
-      case EstadoGravacao.gravando: return 'Toque para parar antes';
-      case EstadoGravacao.enviando: return 'Quase lá...';
-      case EstadoGravacao.sucesso:  return 'Áudio enviado! 🎉';
-      case EstadoGravacao.erro:     return 'Toque para tentar de novo';
-      default:                      return 'Toque para falar (10s)';
+      case EstadoGravacao.gravando:   return 'Toque para parar antes';
+      case EstadoGravacao.enviando:   return 'Quase lá...';
+      case EstadoGravacao.sucesso:    return 'Áudio enviado! 🎉';
+      case EstadoGravacao.erro:       return 'Toque para tentar de novo';
+      case EstadoGravacao.bloqueado:  return 'Limite de $_limiteMaximo tentativas atingido 🔒';
+      default:                        return 'Toque para falar (10s)';
     }
   }
 

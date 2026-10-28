@@ -114,7 +114,7 @@ class WelcomeScreen extends StatelessWidget {
           ),
         ),
         Positioned(
-          left: 135 * scale,
+          left: 200 * scale,
           top: -50 * scale,
           child: Transform.rotate(
             angle: 0.5,

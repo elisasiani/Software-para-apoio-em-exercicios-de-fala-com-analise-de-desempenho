@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/exercicio.dart';
 import '../services/firestore_service.dart';
+import '../utils/liri_utils.dart';
 import 'exercicio_screen.dart';
 import 'access_screen.dart';
 import 'relatorios_screen.dart';
@@ -23,11 +24,32 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   String _nomePaciente = 'Amiguinho';
+  final String _login = loginAtual();
+  late final Stream<Map<String, int>> _tentativasStream;
 
   @override
   void initState() {
     super.initState();
+    _tentativasStream = _streamTentativas();
     _carregarNomePaciente();
+  }
+
+  /// Quantas tentativas o paciente já fez em cada prescrição
+  /// (prescricao_id -> quantidade), em tempo real.
+  Stream<Map<String, int>> _streamTentativas() {
+    return FirebaseFirestore.instance
+        .collection('progresso_exercicios')
+        .where('paciente_id', isEqualTo: widget.pacienteId)
+        .snapshots()
+        .map((snap) {
+      final contagem = <String, int>{};
+      for (final d in snap.docs) {
+        final id = d.data()['prescricao_id'] as String? ?? '';
+        if (id.isEmpty) continue;
+        contagem[id] = (contagem[id] ?? 0) + 1;
+      }
+      return contagem;
+    });
   }
 
   Future<void> _carregarNomePaciente() async {
@@ -161,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> {
               leading: const Icon(Icons.person, color: Color(0xFF7B2FBE)),
               title: Text(_nomePaciente,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Paciente'),
+              subtitle: Text('Paciente · login: $_login'),
             ),
             const Divider(),
             ListTile(
@@ -222,6 +244,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 1.1,
                     ),
                   ),
+                  if (_login.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Login: $_login',
+                      style: TextStyle(
+                        fontFamily: 'LeagueSpartan',
+                        color: const Color(0xFF7B2FBE).withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -304,12 +337,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        // Stream dos exercícios concluídos para mostrar quais já foram feitos
-        StreamBuilder<Set<String>>(
-          stream: FirestoreService.instance
-              .streamExerciciosConcluidos(widget.pacienteId),
+        // Stream com a quantidade de tentativas de cada exercício
+        StreamBuilder<Map<String, int>>(
+          stream: _tentativasStream,
           builder: (context, snap) {
-            final concluidos = snap.data ?? <String>{};
+            final tentativas = snap.data ?? <String, int>{};
             return Column(
               children: [
                 for (int i = 0; i < exercicios.length; i++)
@@ -318,8 +350,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: _CardExercicio(
                       exercicio: exercicios[i],
                       numero: i + 1,
-                      concluido: concluidos.contains(exercicios[i].id),
+                      concluido: (tentativas[exercicios[i].id] ?? 0) > 0,
+                      tentativas: tentativas[exercicios[i].id] ?? 0,
+                      limite: kLimiteTentativas,
                       onTap: () {
+                        // Bloqueia ao atingir o limite de tentativas
+                        if ((tentativas[exercicios[i].id] ?? 0) >=
+                            kLimiteTentativas) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Você já usou todas as tentativas deste exercício 🔒',
+                                style: TextStyle(fontFamily: 'LeagueSpartan'),
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: const Color(0xFF7B2FBE),
+                            ),
+                          );
+                          return;
+                        }
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -346,12 +395,16 @@ class _CardExercicio extends StatelessWidget {
     required this.exercicio,
     required this.numero,
     required this.concluido,
+    required this.tentativas,
+    required this.limite,
     required this.onTap,
   });
 
   final Exercicio exercicio;
   final int numero;
   final bool concluido;
+  final int tentativas;
+  final int limite;
   final VoidCallback onTap;
 
   Color _corDificuldade() {
@@ -376,6 +429,7 @@ class _CardExercicio extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bloqueado = tentativas >= limite;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -472,11 +526,29 @@ class _CardExercicio extends StatelessWidget {
                       ],
                     ],
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    bloqueado
+                        ? 'Tentativas: $tentativas/$limite · bloqueado'
+                        : 'Tentativas: $tentativas/$limite',
+                    style: TextStyle(
+                      fontFamily: 'LeagueSpartan',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: bloqueado
+                          ? Colors.red.shade400
+                          : const Color(0xFF7B2FBE),
+                    ),
+                  ),
                 ],
               ),
             ),
             Icon(
-              concluido ? Icons.replay_rounded : Icons.chevron_right_rounded,
+              bloqueado
+                  ? Icons.lock_rounded
+                  : (concluido
+                      ? Icons.replay_rounded
+                      : Icons.chevron_right_rounded),
               color: const Color(0xFF7B2FBE),
               size: 32,
             ),
@@ -496,57 +568,30 @@ class _CardSequencia extends StatelessWidget {
 
   final String pacienteId;
 
-  /// Lê os progressos do paciente e devolve um Set com os dias da
-  /// SEMANA ATUAL em que ele praticou (0 = domingo … 6 = sábado).
-  Stream<Set<int>> _streamDiasPraticados() {
+  /// Todos os dias (sem hora) em que o paciente praticou. A sequência
+  /// 🔥 atravessa semanas; só a linha de dias (D S T Q Q S S) recomeça
+  /// todo domingo — igual ao gráfico da tela de Relatórios.
+  Stream<Set<DateTime>> _streamDiasPraticados() {
     return FirebaseFirestore.instance
         .collection('progresso_exercicios')
         .where('paciente_id', isEqualTo: pacienteId)
         .where('acertou', isEqualTo: true)
         .snapshots()
-        .map((snap) {
-      // Limite: início da semana (domingo 00:00) atual
-      final agora = DateTime.now();
-      final inicioSemana = DateTime(agora.year, agora.month, agora.day)
-          .subtract(Duration(days: agora.weekday % 7));
-
-      final dias = <int>{};
-      for (final d in snap.docs) {
-        final ts = d.data()['concluido_em'];
-        if (ts is Timestamp) {
-          final data = ts.toDate();
-          if (data.isAfter(inicioSemana)) {
-            dias.add(data.weekday % 7); // 0=dom, 1=seg, ... 6=sab
-          }
-        }
-      }
-      return dias;
-    });
-  }
-
-  /// Conta quantos dias consecutivos terminando hoje o paciente praticou.
-  int _calcularStreak(Set<int> diasPraticadosSemana) {
-    final hoje = DateTime.now().weekday % 7;
-    int streak = 0;
-    for (int i = 0; i <= hoje; i++) {
-      if (diasPraticadosSemana.contains(hoje - i)) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    return streak;
+        .map((snap) => diasPraticados(
+              snap.docs.map((d) => d.data()['concluido_em']),
+            ));
   }
 
   @override
   Widget build(BuildContext context) {
     const labels = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']; // dom→sab
 
-    return StreamBuilder<Set<int>>(
+    return StreamBuilder<Set<DateTime>>(
       stream: _streamDiasPraticados(),
       builder: (context, snap) {
-        final dias    = snap.data ?? <int>{};
-        final streak  = _calcularStreak(dias);
+        final todos   = snap.data ?? <DateTime>{};
+        final semana  = diasDaSemanaAtual(todos);
+        final streak  = calcularSequencia(todos);
         final hoje    = DateTime.now().weekday % 7;
 
         return Column(
@@ -594,7 +639,7 @@ class _CardSequencia extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: List.generate(7, (i) {
-                        final ativo  = dias.contains(i);
+                        final ativo  = semana.contains(i);
                         final ehHoje = i == hoje;
                         return _DiaSemana(
                           letra: labels[i],
@@ -605,6 +650,20 @@ class _CardSequencia extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 4, top: 8),
+              child: Text(
+                streak == 0
+                    ? 'Faça um exercício hoje para começar sua sequência!'
+                    : '$streak ${streak == 1 ? 'dia seguido' : 'dias seguidos'}! '
+                        'Os dias recomeçam todo domingo, mas a sequência 🔥 continua.',
+                style: TextStyle(
+                  fontFamily: 'LeagueSpartan',
+                  fontSize: 12,
+                  color: const Color(0xFF7B2FBE).withOpacity(0.8),
+                ),
               ),
             ),
           ],

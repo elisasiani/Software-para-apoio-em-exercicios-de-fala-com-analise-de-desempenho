@@ -20,8 +20,6 @@ class FirestoreService {
   // ── EXERCÍCIOS PRESCRITOS ─────────────────────────────────────────────────
 
   /// Stream em TEMPO REAL dos exercícios prescritos ao paciente.
-  /// Sempre que a fonoaudióloga adicionar/remover um exercício no web,
-  /// o app mobile atualiza automaticamente.
   Stream<List<Exercicio>> streamExerciciosDoPaciente(String pacienteId) {
     return _db
         .collection('prescricoes')
@@ -53,7 +51,7 @@ class FirestoreService {
     required String palavraAlvo,
     required bool acertou,
     int tentativas = 1,
-    String? audioBase64,   // ← NOVO: áudio gravado (opcional)
+    String? audioBase64,
   }) async {
     final dados = <String, dynamic>{
       'paciente_id':     pacienteId,
@@ -65,16 +63,29 @@ class FirestoreService {
       'concluido_em':    FieldValue.serverTimestamp(),
     };
 
-    // Só inclui o campo de áudio se ele foi enviado
     if (audioBase64 != null && audioBase64.isNotEmpty) {
       dados['audio_base64'] = audioBase64;
-      dados['audio_formato'] = 'audio/mp4'; // AAC dentro de container MP4
+      dados['audio_formato'] = 'audio/mp4';
       dados['tem_audio']     = true;
     } else {
       dados['tem_audio'] = false;
     }
 
     await _db.collection('progresso_exercicios').add(dados);
+  }
+
+  /// Conta quantas tentativas o paciente já tem para uma prescrição específica.
+  /// Usado para impor o limite de 3 tentativas na ExercicioScreen.
+  Future<int> contarTentativas({
+    required String pacienteId,
+    required String prescricaoId,
+  }) async {
+    final snap = await _db
+        .collection('progresso_exercicios')
+        .where('paciente_id', isEqualTo: pacienteId)
+        .where('prescricao_id', isEqualTo: prescricaoId)
+        .get();
+    return snap.docs.length;
   }
 
   /// IDs dos exercícios que o paciente já concluiu (acertou).
